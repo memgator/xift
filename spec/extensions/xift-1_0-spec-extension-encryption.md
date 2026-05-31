@@ -306,7 +306,7 @@ conformance suite (anchored in core Appendix B and channels-general
 ## 14. Open Questions
 
 1. **Multi-recipient encryption.** v1.0 supports a single
-   `recipient_kid` per envelope. Multi-agent CSS sessions
+   `recipient_kid` per envelope. Multi-agent SCS sessions
    (channel-7) currently rely on pair-wise envelopes; multi-recipient
    HPKE (RFC 9180 §6) would let one envelope encrypt to a group.
    Worth specifying in a future revision?

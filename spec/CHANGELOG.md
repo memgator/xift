@@ -14,8 +14,16 @@ Consolidated change history for the documents in `spec/` (and `spec/channels/`).
 > (per-directory changelog convention — see `CLAUDE.md`). The versioned
 > registry/glossary rows are reproduced verbatim.
 
+> **Naming legend (Channel 7).** As of 2026-05-31, Channel 7 is named
+> **SCS — Sequential Conversation Session**, with session parameters `scs_*`
+> and routes `/xift/v1/scs/...`. Wherever a historical row below still says
+> **"CSS"**, **"Conversation Session Stream"**, or **"Conversational Session
+> Synthesis"**, it denotes the *same* Channel 7 now called **SCS**. Historical
+> rows are preserved verbatim and are not edited retroactively.
+
 | Date       | Document            | Version | Notes |
 |------------|---------------------|---------|-------|
+| 2026-05-31 | xift-1_0-spec-channel-7 | v1.1 | **Channel 7 renamed CSS → SCS** — now *Sequential Conversation Session* (predecessors *Conversation Session Stream* / *Conversational Session Synthesis*), per ADR-XIFT-SCS-RENAME-001. Rename spans acronym, prose, and the wire/API surface: session parameters `css_*` → `scs_*` (§11), routes `/xift/v1/css/{sessions,streams/…}` → `/xift/v1/scs/{…}`. Channel routing token (`channel7`) and error categories (`protocol\|policy:channel7:*`) are unchanged. Companion edits (not version-bumped, per this changelog's convention): channel-1 (discovery key `"css"` → `"scs"`, `xift_css_v1` → `xift_scs_v1`), channel-5 (`css_endpoint` → `scs_endpoint`), channel-6, channels-general (channel roster + Flow B), custodian, interop, core, extension-encryption, glossary (§3.5 → "SCS Concepts"). |
 | 2026-05-30 | xift-error-taxonomy | v0.9    | Codified the **layer-placement principle** in §13 (availability/capacity/reachability/freshness of a protocol component is `protocol`; `policy` is for governance/authorization/trust/consent/budget) and applied it to three mis-layered conditions: `policy:custodian:index_quota_exceeded` (202) → `protocol:custodian:index_quota_exceeded` (108); `policy:channel3:direct_fetch_recommended` (203) → `protocol:channel3:direct_fetch_recommended` (106); `policy:provenance:lineage_chain_too_deep` (202) → `protocol:lineage:lineage_chain_too_deep` (108, layer **and** domain corrected). Companion edits in custodian §10.1, channel-3 §9.2, provenance §7.1, governance §7.1. |
 | 2026-05-30 | xift-error-taxonomy | v0.8    | Re-layered four Custodian warnings from `policy:custodian:*` to `protocol:custodian:*` (§10bis): `no_custodian_available` (106), `siea_unavailable_degraded_mode` (106), `subscriber_rate_limit_reached` (103), `index_lag_observed` (106) — protocol-band codes under the `policy` layer violated the layer↔band rule (core §12.1). Codes and severities unchanged. |
 | 2026-05-30 | xift-error-taxonomy | v0.7    | Registered seven categories cited by the channel specs but unregistered: `policy:channel1:partial_advertisement_returned` (204), `policy:channel2:inline_recommended_over_reference` / `reference_recommended_over_inline` (203), `policy:channel3:direct_fetch_recommended` (203), `policy:channel4:event_payload_redacted` (204), `protocol:channel4:subscriber_capacity_nearing` (108), and the cross-channel step-up warning `policy:consent:additional_assurance_required` (207) — added the `consent` domain to §0. Companion name-alignment fixes in channels-general/channel-1/glossary. |

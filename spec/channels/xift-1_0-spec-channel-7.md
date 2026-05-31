@@ -1,6 +1,6 @@
 ---
-title: "XIFT 1.0 — Channel 7: Conversation Session Stream (CSS)"
-status: draft (v1.0)
+title: "XIFT 1.0 — Channel 7: Sequential Conversation Session (SCS)"
+status: draft (v1.1)
 date: 2026-05-23
 visibility: public
 authors:
@@ -18,7 +18,7 @@ related:
   - xift-interop-1.0.md
 ---
 
-# XIFT 1.0 — Channel 7: Conversation Session Stream (CSS)
+# XIFT 1.0 — Channel 7: Sequential Conversation Session (SCS)
 
 Common conventions (transport, authentication, back-pressure,
 identity handshake primitive, reserved error code ranges) are
@@ -33,11 +33,11 @@ RFC 2119 and RFC 8174.
 
 ## 1. Purpose and Scope
 
-CSS resolves **Case 3**: a sustained, multi-turn, bidirectional
+SCS resolves **Case 3**: a sustained, multi-turn, bidirectional
 conversation between two or more agents to refine shared
 understanding or collaboratively produce an artifact.
 
-CSS supports:
+SCS supports:
 
 - 1:1 sessions (default).
 - Multi-agent sessions (3+ participants) — without E2EE in v1.0
@@ -51,10 +51,10 @@ CSS supports:
 
 ## 2. Session Establishment
 
-CSS sessions are initiated via:
+SCS sessions are initiated via:
 
 ```
-POST /xift/v1/css/sessions
+POST /xift/v1/scs/sessions
 Content-Type: application/json
 Authorization: Signature <signed-challenge>
 
@@ -86,7 +86,7 @@ HTTP 201 Created
 {
   "session_id": "01HY1...",
   "session_token": "<opaque-token-derived-from-identity-handshake>",
-  "stream_endpoint": "https://api.example.com/xift/v1/css/streams/01HY1...",
+  "stream_endpoint": "https://api.example.com/xift/v1/scs/streams/01HY1...",
   "accepted_invitees": ["did:web:org.example.com:agent:beta"],
   "declined_invitees": [],
   "session_expires_at": "2026-05-21T11:30:00Z"
@@ -104,7 +104,7 @@ HTTP 201 Created
 The session request MAY carry an OPTIONAL `session_billing_model`
 field that declares the billing arrangement for the session (e.g.,
 flat fee, per-message, per-round). Detailed schema for this field is
-deferred to the billing extension specification; CSS only carries
+deferred to the billing extension specification; SCS only carries
 the reference.
 
 ---
@@ -251,19 +251,19 @@ prescribe it. The synopsis emitted at session close is XIFT-defined.
 Because v1.0 does not support multi-agent E2EE (MLS group support
 deferred to a future release), the following constraint applies:
 
-**Multi-agent CSS sessions (3+ participants) MUST NOT carry
+**Multi-agent SCS sessions (3+ participants) MUST NOT carry
 envelopes or content with `classification ≥ sensitive`.** Sessions
 attempting this MUST be rejected at establishment with `policy:channel7:multi_agent_classification_too_high` (201).
 
-1:1 CSS sessions retain full classification range, using HPKE
+1:1 SCS sessions retain full classification range, using HPKE
 pair-wise encryption per envelope.
 
 ---
 
-## 10. CSS Egress Obligations
+## 10. SCS Egress Obligations
 
 Per core §8.4 (egress validation MUST happen before any envelope
-is emitted), CSS adds the following channel-specific obligations:
+is emitted), SCS adds the following channel-specific obligations:
 
 For each `XiftSessionMessage`:
 
@@ -276,18 +276,18 @@ For each `XiftSessionMessage`:
 
 ---
 
-## 11. CSS Normative Parameters
+## 11. SCS Normative Parameters
 
 Channel 7-specific parameters extending core §10:
 
 | Parameter                                          | Default     | Purpose                                                       |
 |----------------------------------------------------|-------------|---------------------------------------------------------------|
-| `css_session_max_duration_seconds`                 | 3600        | 1 hour. Hard limit on session duration.                       |
-| `css_max_concurrent_sessions_per_did`              | 16          | Per-agent concurrent session quota.                           |
-| `css_max_participants_per_session`                 | 8           | Limit for multi-agent sessions.                               |
-| `css_max_rounds_per_session`                       | 10          | Hard cap on refinement rounds.                                |
-| `css_max_message_size_kb`                          | 32          | Maximum size of any single session message.                   |
-| `css_session_token_ttl_seconds`                    | 3600        | Matches session duration; rotation supported.                 |
+| `scs_session_max_duration_seconds`                 | 3600        | 1 hour. Hard limit on session duration.                       |
+| `scs_max_concurrent_sessions_per_did`              | 16          | Per-agent concurrent session quota.                           |
+| `scs_max_participants_per_session`                 | 8           | Limit for multi-agent sessions.                               |
+| `scs_max_rounds_per_session`                       | 10          | Hard cap on refinement rounds.                                |
+| `scs_max_message_size_kb`                          | 32          | Maximum size of any single session message.                   |
+| `scs_session_token_ttl_seconds`                    | 3600        | Matches session duration; rotation supported.                 |
 
 ---
 
@@ -298,14 +298,14 @@ Channel 7-specific parameters extending core §10:
 Multi-agent sessions failing to reach consensus indefinitely.
 
 Mitigation:
-- `css_max_rounds_per_session` hard cap.
+- `scs_max_rounds_per_session` hard cap.
 - `policy:channel7:consensus_unreachable` (203, warning) emitted when a round closes without consensus.
 - Initiator MAY emit `task_complete` even without consensus
   (with synopsis noting the disagreement).
 
 ---
 
-## 13. CSS Error Codes
+## 13. SCS Error Codes
 
 Per the XIFT error model (core §12, ADR-XIFT-ERROR-MODEL-001), `code` is
 the generic routing axis and `category` is the source of domain truth;
@@ -330,7 +330,7 @@ the table's layer and severity columns complete the routing tuple.
 ## 14. Open Questions
 
 1. **Multi-agent E2EE.** MLS group support (RFC 9420) deferred to
-   a future release. Until then, sensitive content in multi-agent CSS sessions
+   a future release. Until then, sensitive content in multi-agent SCS sessions
    is hard-rejected (§9). Is there a pair-wise broadcast pattern
    (each participant pair has its own HPKE channel within the
    session) that's worth specifying as interim?
@@ -344,6 +344,6 @@ the table's layer and severity columns complete the routing tuple.
    default to a function of trust score? This could create
    plutocratic dynamics.
 
-4. **CSS streaming transport.** The specification supports SSE;
+4. **SCS streaming transport.** The specification supports SSE;
    WebSocket is mentioned as escalation. Should explicit fallback
    rules be in the spec, or left to capability negotiation?

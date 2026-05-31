@@ -40,7 +40,7 @@ hold relevant content.
 
 SDR is request/response with optional streaming aggregation. It is
 **not** a conversation channel; for sustained refinement after
-initial discovery, CSS (Channel 7) is used.
+initial discovery, SCS (Channel 7) is used.
 
 ---
 
@@ -55,7 +55,7 @@ SDR works in two topologies:
   that maintains an HNSW-shardable index of capability vectors. The
   Custodian returns candidate DIDs ranked by composite score. The
   querier then either fetches via Channel 2 (Handoff) or opens
-  Channel 7 (CSS). MANDATORY at mesh > 50 agents (core §10).
+  Channel 7 (SCS). MANDATORY at mesh > 50 agents (core §10).
 
 ---
 
@@ -186,7 +186,7 @@ Content-Type: application/json
       "pii_classification": "anonymized",
       "purpose_compatible": true,
       "handoff_endpoint": "https://agent-beta.example.com/xift/v1/envelopes",
-      "css_endpoint": "https://agent-beta.example.com/xift/v1/css"
+      "scs_endpoint": "https://agent-beta.example.com/xift/v1/scs"
     }
   ],
   "completed": false,
@@ -222,7 +222,7 @@ Content-Type: application/json
 | `pii_classification`   | Identifiability of the candidate.                                      |
 | `purpose_compatible`   | Whether the candidate's declared `purpose_of_use` matches query.       |
 | `handoff_endpoint`     | URL to fetch the full envelope via Channel 2.                          |
-| `css_endpoint`         | OPTIONAL. URL to open Channel 7 (CSS) with this candidate.            |
+| `scs_endpoint`         | OPTIONAL. URL to open Channel 7 (SCS) with this candidate.            |
 
 The `preview` MUST be redacted of PII. It is provided to help the
 querier decide which candidates to fetch in full. Previews longer

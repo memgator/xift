@@ -16,7 +16,7 @@ related:
   - xift-1.0-spec-channel-4.md (Change Notification)
   - xift-1.0-spec-channel-5.md (Semantic Discovery Request/Response)
   - xift-1.0-spec-channel-6.md (Semantic Interest & Experience Announce)
-  - xift-1.0-spec-channel-7.md (Conversation Session Stream)
+  - xift-1.0-spec-channel-7.md (Sequential Conversation Session)
   - xift-custodian-1.0.md (Trust Custodian)
   - xift-interop-1.0.md (A2A/MCP adapters)
 ---
@@ -39,7 +39,7 @@ Companion specifications in separate documents:
   — per-channel normative specifications (Discovery & Handshake,
   Envelope Handoff, Status Verification, Change Notification,
   Semantic Discovery Request/Response, Semantic Interest &
-  Experience Announce, Conversation Session Stream).
+  Experience Announce, Sequential Conversation Session).
 - `xift-custodian-1.0.md` — Trust Custodian role.
 - `xift-interop-1.0.md` — adapters to A2A, MCP.
 
@@ -1416,7 +1416,7 @@ here.
 - `xift-1.0-spec-channel-4.md` — Change Notification (Revocation Push).
 - `xift-1.0-spec-channel-5.md` — Semantic Discovery Request/Response (SDR).
 - `xift-1.0-spec-channel-6.md` — Semantic Interest & Experience Announce (SIEA).
-- `xift-1.0-spec-channel-7.md` — Conversation Session Stream (CSS).
+- `xift-1.0-spec-channel-7.md` — Sequential Conversation Session (SCS).
 
 ### Companion Specifications
 

@@ -144,7 +144,7 @@ interleaved:
 4. Agent B retrieves selected experiences via XIFT's Handoff
    (Channel 2).
 5. Agent B optionally refines with the experience owner via XIFT's
-   CSS (Channel 7).
+   SCS (Channel 7).
 6. Agent B returns the task result to Agent A via A2A.
 7. The result, if it constitutes a new knowledge artifact, is wrapped
    in an XIFT envelope (potentially using the A2A Adapter, §5) and
@@ -173,7 +173,7 @@ agents can discover XIFT participation:
         "handoff": "https://api.example.com/xift/v1/envelopes",
         "sdr": "https://api.example.com/xift/v1/sdr",
         "siea": "https://api.example.com/xift/v1/siea",
-        "css": "https://api.example.com/xift/v1/css"
+        "scs": "https://api.example.com/xift/v1/scs"
       },
       "supported_extensions": [
         "governance", "provenance", "encryption", "revocation", "quality"
@@ -676,7 +676,7 @@ interaction:
 | Discover what experiences other agents have         | XIFT SDR (Channel 5)                  |
 | Subscribe to relevant new experiences as they emerge| XIFT SIEA (Channel 6)                 |
 | Retrieve a specific knowledge artifact              | XIFT Handoff (Channel 2)              |
-| Refine a knowledge artifact in multi-turn conversation | XIFT CSS (Channel 7)              |
+| Refine a knowledge artifact in multi-turn conversation | XIFT SCS (Channel 7)              |
 | Delegate a unit of work to another agent            | A2A task                              |
 | Receive structured task results                     | A2A task/result (optionally Adapter)  |
 | Invoke a tool                                       | MCP                                   |
@@ -717,7 +717,7 @@ without implementing XIFT".
 
 **Why wrong:** The Adapter is encapsulation, not substitution.
 Sending an XIFT envelope through an A2A message does not give the
-sender access to XIFT's discovery, revocation, or CSS mechanisms.
+sender access to XIFT's discovery, revocation, or SCS mechanisms.
 Those require XIFT-native channels.
 
 **Right:** Use the Adapter only when an XIFT artifact needs to
@@ -839,7 +839,7 @@ conformance, the following tests apply:
 | Send a knowledge artifact to one peer with consent      | XIFT Handoff              |
 | Send a task result to a peer                            | A2A task/result           |
 | Send a task result that IS a governed knowledge artifact| A2A task/result + Adapter |
-| Refine an artifact over multi-turn dialog               | XIFT CSS                  |
+| Refine an artifact over multi-turn dialog               | XIFT SCS                  |
 | Have a conversation about a task                        | A2A multi-turn task       |
 | Revoke a previously shared artifact                     | XIFT BSL (no A2A/MCP eq.) |
 

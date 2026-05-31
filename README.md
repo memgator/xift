@@ -49,7 +49,7 @@ an XIFT mesh.
 | `xift-1.0-spec-channel-4.md` | Channel 4: Change Notification (SSE Push). Revocation events, capability changes, Custodian state, keepalive, reconnection. |
 | `xift-1.0-spec-channel-5.md` | Channel 5: Semantic Discovery Request (SDR). Embedding-based search, composite scoring, preview redaction. |
 | `xift-1.0-spec-channel-6.md` | Channel 6: Semantic Interest & Experience Announce (SIEA). Persistent subscriptions, announcements, match notifications, fanout control. |
-| `xift-1.0-spec-channel-7.md` | Channel 7: Conversational Session Synthesis (CSS). Multi-turn sessions, smart clustering, consensus voting, session journals. |
+| `xift-1.0-spec-channel-7.md` | Channel 7: Sequential Conversation Session (SCS). Multi-turn sessions, smart clustering, consensus voting, session journals. |
 | `xift-1.0-spec-extension-governance.md` | Extension: `governance`. Consent, classification, PII classification, purpose of use, lineage policy, policy tags. |
 | `xift-1.0-spec-extension-provenance.md` | Extension: `provenance`. Derivation lineage, 6 derivation types, anonymization evidence. |
 | `xift-1.0-spec-extension-encryption.md` | Extension: `encryption`. HPKE (RFC 9180), mandatory for sensitive/restricted, scheme negotiation. |
@@ -94,7 +94,7 @@ an XIFT mesh.
 | **Experience** | One kind of knowledge — acquired during the agent's Working Self operation. |
 | **Host** | The process embedding the XIFT crates (Memgator, OpenClaw, a custom agent shell, a test harness). |
 | **Custodian** | Optional agent role offering Capability Index, BSL Aggregation, and Identity Cache services. |
-| **Channel** | One of 7 wire-flow protocols (Discovery, Handoff, BSL Pull, SSE Push, SDR, SIEA, CSS). |
+| **Channel** | One of 7 wire-flow protocols (Discovery, Handoff, BSL Pull, SSE Push, SDR, SIEA, SCS). |
 | **Extension** | One of 5 opt-in envelope metadata blocks (governance, provenance, encryption, revocation, quality). |
 
 ## Version History

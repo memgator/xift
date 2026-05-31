@@ -83,7 +83,7 @@ its zero-trust principles.
   from the identity provider (Agent Mesh in the reference
   implementation). The Custodian reads them as inputs to ranking
   and gating, but does not compute them.
-- **MUST NOT mediate Channel 7 (CSS) sessions.** CSS is direct
+- **MUST NOT mediate Channel 7 (SCS) sessions.** SCS is direct
   agent-to-agent. The Custodian's role ends after discovery
   (Channels 5 and 6) returns endpoints.
 
@@ -211,7 +211,7 @@ unreachable), agents continue operating in **degraded P2P mode**:
 - Channel 6 (SIEA) operates in P2P broadcast mode if mesh size ≤
   20, otherwise SIEA is unavailable (subscribers receive
   `protocol:custodian:siea_unavailable_degraded_mode`, 106, warning).
-- Channel 7 (CSS) is unaffected (it does not depend on Custodian).
+- Channel 7 (SCS) is unaffected (it does not depend on Custodian).
 - BSL polling reverts to per-issuer direct polling.
 - Identity handshakes are recomputed per session (no cache).
 

@@ -13,7 +13,7 @@ related:
   - xift-1.0-spec-channel-4.md (Channel 4 — Change Notification)
   - xift-1.0-spec-channel-5.md (Channel 5 — Semantic Discovery Request/Response)
   - xift-1.0-spec-channel-6.md (Channel 6 — Semantic Interest & Experience Announce)
-  - xift-1.0-spec-channel-7.md (Channel 7 — Conversation Session Stream)
+  - xift-1.0-spec-channel-7.md (Channel 7 — Sequential Conversation Session)
   - xift-custodian-1.0.md
   - xift-interop-1.0.md
 ---
@@ -36,7 +36,7 @@ XIFT v1.0. Each individual channel is specified in its own document
 | 4       | Change Notification (Revocation Push)         | `xift-1.0-spec-channel-4.md`       |
 | 5       | Semantic Discovery Request/Response (SDR)     | `xift-1.0-spec-channel-5.md`       |
 | 6       | Semantic Interest & Experience Announce (SIEA)| `xift-1.0-spec-channel-6.md`       |
-| 7       | Conversation Session Stream (CSS)             | `xift-1.0-spec-channel-7.md`       |
+| 7       | Sequential Conversation Session (SCS)             | `xift-1.0-spec-channel-7.md`       |
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
 "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" are per
@@ -205,7 +205,7 @@ canonical per-layer set (core §12.1).
 | 4        | `channel4`                |
 | 5 (SDR)  | `channel5`                |
 | 6 (SIEA) | `channel6`                |
-| 7 (CSS)  | `channel7`                |
+| 7 (SCS)  | `channel7`                |
 
 For example, a Channel 3 BSL-too-short condition is
 `code: 105, layer: protocol, category: "protocol:channel3:bsl_too_short"`,
@@ -293,7 +293,7 @@ any subset. Channel implementations are declared in capability
 advertisements (see `xift-1.0-spec-channel-1.md` §4).
 
 A receiver that implements Channel 2 (Handoff) but not Channels 5–7
-is conformant. A receiver that implements Channel 7 (CSS) but not
+is conformant. A receiver that implements Channel 7 (SCS) but not
 Channels 5–6 is conformant. Channel dependencies are explicit and
 minimized.
 
@@ -309,7 +309,7 @@ minimized.
   Resolved by Channel 6 (SIEA).
 - **Case 3 — Sustained refinement (thread).** Multi-turn conversation
   between agents to refine shared understanding.
-  Resolved by Channel 7 (CSS).
+  Resolved by Channel 7 (SCS).
 
 ---
 
@@ -334,15 +334,15 @@ The seven channels compose in patterns. Three reference flows:
 2. Agent B announces a new artifact via SIEA.
 3. Custodian matches subscription with announcement.
 4. Custodian pushes `XiftMatchNotification` to Agent A.
-5. Agent A opens a CSS session (Channel 7) with Agent B to discuss
+5. Agent A opens a SCS session (Channel 7) with Agent B to discuss
    the artifact in depth.
 6. After k-rounds and consensus, the session produces a synopsis.
 
 ### 5.3 Flow C — Combined Discovery and Refinement
 
 1. Agent A sends `XiftSemanticQuery` via SDR.
-2. Top match is Agent B; Agent A receives `css_endpoint`.
-3. Agent A opens CSS session directly with Agent B without first
+2. Top match is Agent B; Agent A receives `scs_endpoint`.
+3. Agent A opens SCS session directly with Agent B without first
    fetching via Channel 2 — the session itself is the means of
    inspection and refinement.
 4. Session closes with synopsis; Agent A's host (Memgator)
@@ -722,12 +722,12 @@ Extends the core Appendix B:
 | C23 | `Subscriber`, `Channel6Handler`                      | `SubscriptionRegistered`                           | Subscription `Active → NearingExpiry → Expired` OR `Revoked` | Lifecycle transitions; warnings at 90%                     | `siea_subscription_max_duration_seconds`, `siea_subscription_near_expiry_pct`                         | —   | Subscription lifecycle                 |
 | C24 | `Announcer`, `Channel6Handler`, `Subscriber`         | `AnnouncementPublished`                            | n/a                                                          | Match notification routed correctly                        | (SIEA params)                                                                                         | —   | Announcement matching                  |
 | C25 | `Custodian`, `Channel6Handler`                       | `AnnouncementPublished` exceeding fanout           | n/a                                                          | Cap enforced; `protocol:channel6:notification_deprioritized` (108) warning fires                           | `siea_global_fanout_per_announcement_max`                                                             | —   | Fanout cap                             |
-| C26 | `Initiator`, `Channel7Handler`, `Invitee`s           | `SessionRequested`                                 | Session `Requested → Establishing → Active`                  | Multi-invitee acceptance, token derivation                 | `css_max_participants_per_session`, `css_session_token_ttl_seconds`                                   | —   | CSS session establishment              |
-| C27 | `Channel7Handler`, `Initiator`, `Invitee`            | smart-clustering rounds                            | round 1 → round k                                            | k-rounds, vote, consensus, synopsis                        | `css_max_rounds_per_session`, `css_consensus_threshold_default`                                       | —   | Smart clustering                       |
-| C28 | `Channel7Handler`                                    | `SessionRequested` 3+ participants `sensitive`     | n/a                                                          | `policy:channel7:multi_agent_classification_too_high` (201)                                                 | `css_max_participants_per_session`                                                                    | —   | Multi-agent classification cap         |
+| C26 | `Initiator`, `Channel7Handler`, `Invitee`s           | `SessionRequested`                                 | Session `Requested → Establishing → Active`                  | Multi-invitee acceptance, token derivation                 | `scs_max_participants_per_session`, `scs_session_token_ttl_seconds`                                   | —   | SCS session establishment              |
+| C27 | `Channel7Handler`, `Initiator`, `Invitee`            | smart-clustering rounds                            | round 1 → round k                                            | k-rounds, vote, consensus, synopsis                        | `scs_max_rounds_per_session`, `scs_consensus_threshold_default`                                       | —   | Smart clustering                       |
+| C28 | `Channel7Handler`                                    | `SessionRequested` 3+ participants `sensitive`     | n/a                                                          | `policy:channel7:multi_agent_classification_too_high` (201)                                                 | `scs_max_participants_per_session`                                                                    | —   | Multi-agent classification cap         |
 | C29 | `Channel2Handler` (receiver not declaring `quality`) | `EnvelopeReceived` w/ `quality`                    | n/a                                                          | Soft-accept (no error)                                      | (no numeric)                                                                                          | —   | Soft acceptance of `quality`           |
 | C30 | `Channel5Handler` → `Channel2Handler`                | `SDRQueryReceived` → `EnvelopeIssued`              | n/a                                                          | End-to-end SDR → Handoff                                   | (mixed)                                                                                               | —   | Inter-channel flow A                   |
-| C31 | `Channel6Handler` → `Channel7Handler`                | `MatchNotificationDispatched` → `SessionRequested` | n/a                                                          | End-to-end SIEA → CSS                                      | (mixed)                                                                                               | —   | Inter-channel flow B                   |
+| C31 | `Channel6Handler` → `Channel7Handler`                | `MatchNotificationDispatched` → `SessionRequested` | n/a                                                          | End-to-end SIEA → SCS                                      | (mixed)                                                                                               | —   | Inter-channel flow B                   |
 | C32 | `CustodianCore`                                      | `MeshSizeChanged`                                  | `Dormant → Warmable → Active` and reverse                    | Activation at 25, deactivation at 15; hard P2P limit at 50 | `mesh_custodian_activation_threshold`, `mesh_custodian_deactivation_threshold`, `mesh_p2p_hard_limit` | —   | Custodian threshold transition         |
 | C33 | `EgressGuardLayer`                                   | Outbound SDR or SIEA emission                      | n/a                                                          | `scope_redaction_applied` honest                           | (no numeric)                                                                                          | —   | Egress validation in semantic channels |
 | C34 | `Channel4Handler`                                    | SSE subscriber count at capacity                   | `Streaming` → (no change)                                    | New connection receives 503 + `protocol:channel4:notification_connection_refused`; existing streams unaffected | `channel_4_subscriber_capacity_max`                                                          | —   | Subscriber capacity governance         |
@@ -785,7 +785,7 @@ Extends the core Appendix B:
 
 ## Appendix B — Channel Comparison Summary (Semantic Channels)
 
-| Aspect              | Channel 5 (SDR)              | Channel 6 (SIEA)             | Channel 7 (CSS)              |
+| Aspect              | Channel 5 (SDR)              | Channel 6 (SIEA)             | Channel 7 (SCS)              |
 |---------------------|------------------------------|------------------------------|------------------------------|
 | Pattern             | Request/response             | Publish + persistent-subscribe | Long-lived stream          |
 | Initiator           | Querier                      | Announcer / Subscriber       | Initiator                    |
@@ -831,7 +831,7 @@ sequenceDiagram
     Agent B-->>Agent A: KnowledgeObject
 ```
 
-### Flow B — SIEA → CSS
+### Flow B — SIEA → SCS
 
 ```
 Agent A             Custodian            Agent B
@@ -841,7 +841,7 @@ Agent A             Custodian            Agent B
    |                    |--match            |
    |<--MatchNotification|                   |
    |                    |                   |
-   |---CSS session establish (Channel 7)--->|
+   |---SCS session establish (Channel 7)--->|
    |<--session_id, session_token------------|
    |---draft------------------------------->|
    |<--critique-----------------------------|
@@ -866,8 +866,8 @@ sequenceDiagram
     Note over Custodian: match
     Custodian-->>Agent A: MatchNotification
 
-    Note over Agent A, Agent B: CSS Session Establishment
-    Agent A->>Agent B: CSS session establish (Channel 7)
+    Note over Agent A, Agent B: SCS Session Establishment
+    Agent A->>Agent B: SCS session establish (Channel 7)
     Agent B-->>Agent A: session_id, session_token
     
     Note over Agent A, Agent B: Collaboration Loop

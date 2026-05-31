@@ -84,7 +84,7 @@ schema is:
     "xift_changes_v1":   "https://api.example.com/xift/v1/notifications",
     "xift_sdr_v1":       "https://api.example.com/xift/v1/sdr",
     "xift_siea_v1":      "https://api.example.com/xift/v1/siea",
-    "xift_css_v1":       "https://api.example.com/xift/v1/css"
+    "xift_scs_v1":       "https://api.example.com/xift/v1/scs"
   },
   "supported_extensions": [
     "governance", "provenance", "encryption", "revocation"
@@ -161,7 +161,7 @@ interleaved for readability.
     "xift_changes_v1":   "https://api.example.com/xift/v1/notifications",
     "xift_sdr_v1":       "https://api.example.com/xift/v1/sdr",
     "xift_siea_v1":      "https://api.example.com/xift/v1/siea",
-    "xift_css_v1":       "https://api.example.com/xift/v1/css"
+    "xift_scs_v1":       "https://api.example.com/xift/v1/scs"
   },
   "supported_extensions": [
     "governance",
@@ -187,7 +187,7 @@ interleaved for readability.
       "max_active_subscriptions": 32,
       "broadcast_topology": "custodian-mediated"
     },
-    "css": {
+    "scs": {
       "enabled": true,
       "max_concurrent_sessions": 16,
       "max_session_duration_seconds": 3600,

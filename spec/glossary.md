@@ -137,7 +137,7 @@ Memgator-only terms (not part of the XIFT protocol) are marked
 
 **Channel 6 — Semantic Interest & Experience Announce (SIEA).** Persistent subscriptions (interests) and announcements (new knowledge available). Custodian matches and routes notifications. See `xift-1.0-spec-channel-6.md`.
 
-**Channel 7 — Conversation Session Stream (CSS).** Multi-turn, bidirectional sessions between agents for collaborative refinement. Supports smart clustering, k-rounds, consensus voting, and session journals. See `xift-1.0-spec-channel-7.md`.
+**Channel 7 — Sequential Conversation Session (SCS).** Multi-turn, bidirectional sessions between agents for collaborative refinement. Supports smart clustering, k-rounds, consensus voting, and session journals. See `xift-1.0-spec-channel-7.md`.
 
 ### 3.2 Extensions
 
@@ -167,7 +167,7 @@ Memgator-only terms (not part of the XIFT protocol) are marked
 
 **XiftSemanticQuery.** The request message on Channel 5 SDR: carries query text, query embedding, Bloom filter, governance constraints, cost budget, and a signed challenge. See `xift-1.0-spec-channel-5.md` §3.
 
-**XiftSemanticResponse.** The response message on Channel 5 SDR: carries ranked match candidates with composite score breakdowns, per-candidate DIDs, and optional `css_endpoint` for follow-on sessions. See `xift-1.0-spec-channel-5.md`.
+**XiftSemanticResponse.** The response message on Channel 5 SDR: carries ranked match candidates with composite score breakdowns, per-candidate DIDs, and optional `scs_endpoint` for follow-on sessions. See `xift-1.0-spec-channel-5.md`.
 
 **Subscription (SIEA).** A persistent declaration of interest by a subscriber on Channel 6. Carries interest text, interest embedding, governance constraints, and a delivery endpoint. TTL-bounded (max 30 days). See `xift-1.0-spec-channel-6.md` §3.
 
@@ -191,17 +191,17 @@ Memgator-only terms (not part of the XIFT protocol) are marked
 
 **Subscriber Capacity Governance.** Mechanism by which a Custodian declares and enforces its maximum concurrent subscriber count on Channel 4. The Custodian advertises `channel_4_subscriber_capacity` in its capability document; at capacity it rejects new connections with HTTP 503 + `protocol:channel4:notification_connection_refused` (108), emits `protocol:channel4:subscriber_capacity_nearing` (108, warning) at 80%, and optionally evicts the lowest-trust-score subscriber (sending `stream_terminated` with reason `protocol:channel4:notification_stream_terminated`, 106) to make room for higher-trust-score agents. Overflow subscribers fall back to Channel 3 polling. See `xift-1.0-spec-channels-general.md` §7.6.
 
-### 3.5 Channel 7 — CSS Concepts
+### 3.5 Channel 7 — SCS Concepts
 
-**Smart Clustering.** OPTIONAL structured refinement pattern in CSS sessions. When enabled, the session follows k-rounds of draft/critique/revision cycles before consensus. See `xift-1.0-spec-channel-7.md` §6.
+**Smart Clustering.** OPTIONAL structured refinement pattern in SCS sessions. When enabled, the session follows k-rounds of draft/critique/revision cycles before consensus. See `xift-1.0-spec-channel-7.md` §6.
 
-**K-Rounds.** The refinement rounds in a smart-clustering CSS session: each round includes `draft`, `critique`, and `revision` messages. Capped by `css_max_rounds_per_session` (default 10). See `xift-1.0-spec-channel-7.md` §6.
+**K-Rounds.** The refinement rounds in a smart-clustering SCS session: each round includes `draft`, `critique`, and `revision` messages. Capped by `scs_max_rounds_per_session` (default 10). See `xift-1.0-spec-channel-7.md` §6.
 
-**Consensus Voting.** Vote mechanism in CSS sessions. Votes carry `value` (`approve`, `reject`, `abstain`), an optional `weight` (default 1.0), and a `reason`. Consensus is reached when the weighted-approve ratio meets `consensus_threshold`. See `xift-1.0-spec-channel-7.md` §7.
+**Consensus Voting.** Vote mechanism in SCS sessions. Votes carry `value` (`approve`, `reject`, `abstain`), an optional `weight` (default 1.0), and a `reason`. Consensus is reached when the weighted-approve ratio meets `consensus_threshold`. See `xift-1.0-spec-channel-7.md` §7.
 
-**Session Journal.** Ordered log of all messages with their signatures maintained during a CSS session. Consumed by the host at session close for consolidation into memory. Format is implementation-defined. See `xift-1.0-spec-channel-7.md` §8.
+**Session Journal.** Ordered log of all messages with their signatures maintained during a SCS session. Consumed by the host at session close for consolidation into memory. Format is implementation-defined. See `xift-1.0-spec-channel-7.md` §8.
 
-**Synopsis.** End-of-session consolidated summary produced by the initiator of a CSS session. Emitted as a `message_type = synopsis` message. This is an XIFT-defined message type, distinct from the implementation-defined journal. See `xift-1.0-spec-channel-7.md` §5.
+**Synopsis.** End-of-session consolidated summary produced by the initiator of a SCS session. Emitted as a `message_type = synopsis` message. This is an XIFT-defined message type, distinct from the implementation-defined journal. See `xift-1.0-spec-channel-7.md` §5.
 
 ### 3.6 Transport Concepts
 

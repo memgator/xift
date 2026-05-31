@@ -331,7 +331,7 @@ Semantic Interest & Experience Announce.
 
 ## 10. Channel 7 Errors and Warnings (`domain=channel7`)
 
-Conversational Session Synthesis.
+Sequential Conversation Session.
 
 | Code | Category                              | Layer    | Severity | Scope     | Trigger                                                                  | Retryable | Emitter            | Observer       | Remedy                                                                  | Source        | Status |
 |------|---------------------------------------|----------|----------|-----------|--------------------------------------------------------------------------|-----------|---------------------|----------------|-------------------------------------------------------------------------|---------------|--------|

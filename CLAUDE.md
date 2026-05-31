@@ -38,8 +38,8 @@ commit anything that reveals private deliberation to this repo.
 
 - **7 channels**: 1 Discovery & Handshake, 2 Envelope Handoff, 3 Status
   Verification / BSL Pull, 4 Change Notification / SSE Push, 5 Semantic Discovery
-  Request (SDR), 6 Semantic Interest & Experience Announce (SIEA), 7 Conversational
-  Session Synthesis (CSS).
+  Request (SDR), 6 Semantic Interest & Experience Announce (SIEA), 7 Sequential
+  Conversation Session (SCS).
 - **5 extensions**: `governance`, `provenance`, `encryption`, `revocation` (core,
   MUST recognise), `quality` (silently ignorable).
 - **10 host traits**: `IdentityProvider`, `TrustScoreProvider`, `DIDResolver`,

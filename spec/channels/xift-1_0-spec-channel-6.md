@@ -192,7 +192,7 @@ Authorization: Signature <signed-challenge from Custodian>
 ```
 
 The subscriber MAY then fetch the envelope via Channel 2, open a
-Channel 7 (CSS) session with the announcer, or ignore the
+Channel 7 (SCS) session with the announcer, or ignore the
 notification.
 
 ---
