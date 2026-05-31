@@ -237,7 +237,7 @@ dimensions, each in [0.0, 1.0]:
 
 | Dimension              | Meaning                                                                |
 |------------------------|------------------------------------------------------------------------|
-| `semantic_alignment`   | Cosine similarity between query embedding and candidate's content/capability embedding. |
+| `semantic_alignment`   | Cosine similarity between query embedding and candidate's content/capability embedding. **Vocabulary-aware** when the query attaches an `ontology` descriptor (§7.1). |
 | `policy_compatibility` | How well the candidate's governance attributes match the query constraints. |
 | `resource_fit`         | Compatibility with the query's `max_latency_ms` and `cost_budget_tokens`. |
 | `spec_similarity`      | Cosine similarity between querier's and candidate's spec embeddings (behavioral alignment). |
@@ -247,6 +247,22 @@ implementation-defined. Responders SHOULD document their aggregation
 in capability advertisements for transparency. Queriers MAY ignore
 `composite_score` and rank by their own function over
 `score_breakdown`.
+
+### 7.1 Vocabulary-Aware `semantic_alignment` (`ontology`)
+
+A query MAY attach the requester's vocabulary **descriptor** via the
+`ontology` extension (`xift-1.0-spec-extension-ontology.md` §2). When
+present, the responder computes `semantic_alignment` over the declared
+vocabulary rather than over raw embeddings alone, reducing the
+false-positive matches that arise when two agents use divergent
+vocabularies. The descriptor is **optional** on Channel 5: an alignment
+the descriptor cannot resolve **escalates to Channel 7 (SCS)**, where the
+reciprocal loop settles it; there is no Channel-5 penalty for its
+absence. Alignment cells produced in a prior SCS session MAY be reused
+host-internally to sharpen this dimension, subject to the freshness
+rules of `xift-1.0-spec-extension-ontology.md` §6. Exactly how a cell's
+`alignment_score` folds into this dimension (weight, floor) is
+implementation-defined.
 
 ---
 

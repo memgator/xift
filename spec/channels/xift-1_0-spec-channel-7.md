@@ -169,6 +169,9 @@ objects:
 | `synopsis`        | End-of-session consolidated summary produced by initiator.              |
 | `session_key_rotation` | Trigger token rotation mid-session.                                |
 | `session_close`   | Explicit session termination.                                           |
+| `ontology_probe`     | (`ontology` ext.) Request alignment for a set of concepts; carries a scoped SKOS projection. See §6.1. |
+| `ontology_assertion` | (`ontology` ext.) Assert candidate alignment cells for the probed concepts.                            |
+| `ontology_ack`       | (`ontology` ext.) Accept/reject asserted cells; consolidated cells land in the `synopsis`.             |
 
 ---
 
@@ -192,6 +195,31 @@ Rationale: k-round refinement reduces hallucination risk in
 multi-agent reasoning and produces auditable consolidation paths.
 This pattern is drawn from 2025 research on multi-agent
 collaboration.
+
+### 6.1 Reciprocal Ontology Alignment Loop (`ontology` ext.)
+
+When both participants declare the `ontology` extension and opt in for
+the session, SCS is the **only** channel that hosts the reciprocal
+alignment loop (`xift-1.0-spec-extension-ontology.md` §3.5). The loop
+**reuses the existing round, journal and synopsis machinery unchanged**
+— it adds no consensus semantics (consensus, voting weights and round
+limits remain exactly as in §7 and ADR-XIFT-SCS-CONSENSUS-WEIGHTS-002):
+
+1. A participant emits `ontology_probe` with a scoped SKOS projection of
+   the concepts needing alignment.
+2. The counterparty emits `ontology_assertion` with candidate alignment
+   cells (`xift-1.0-spec-extension-ontology.md` §3.2), derived under
+   frugal tiering (deterministic first, model tier only on borderline
+   cells).
+3. Participants exchange `ontology_ack` to accept/reject cells.
+4. The final `synopsis` carries the **consolidated alignment cells**.
+
+The model tier is non-deterministic and therefore **advisory and never
+consensus-bearing**; a low `alignment_score` surfaces as the warning
+`model:ontology:alignment_score_low` (303) unless a deployment configures
+`ontology_alignment_min_score`. Cells in the signed synopsis MAY be
+cached and reused to seed later Channel 5/6 exchanges, invalidated on a
+`context_hash` change or after `ontology_cell_max_age_seconds`.
 
 ---
 

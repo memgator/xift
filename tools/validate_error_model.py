@@ -115,9 +115,7 @@ ORPHAN_ALLOW_PREFIXES = (
 # allow-list — narrow on purpose, so a typo in these domains is still caught.
 # Remove each entry when its row lands in xift-error-taxonomy.md.
 ORPHAN_ALLOW_EXACT = {
-    # ADR-XIFT-ONTOLOGY-001 §2.5
-    "protocol:ontology:context_hash_mismatch",
-    # ADR-XIFT-BUNDLE-001 §6
+    # ADR-XIFT-BUNDLE-001 §6 (pending registration)
     "protocol:bundle:bundle_index_out_of_range",
     "protocol:bundle:bundle_incomplete",
     "protocol:bundle:bundle_too_large",

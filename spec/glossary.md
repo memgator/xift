@@ -141,7 +141,7 @@ Memgator-only terms (not part of the XIFT protocol) are marked
 
 ### 3.2 Extensions
 
-**Extension.** An opt-in metadata block added to the KnowledgeObject envelope. XIFT v1.0 defines five, each in its own `xift-1.0-spec-extension-{name}.md` document.
+**Extension.** An opt-in metadata block added to the KnowledgeObject envelope. XIFT v1.0 defines six, each in its own `xift-1.0-spec-extension-{name}.md` document.
 
 **Extension: `governance`.** Consent, classification, PII classification, purpose of use, lineage policy, policy tags, agent role. Core extension (MUST recognise). See `xift-1.0-spec-extension-governance.md`.
 
@@ -152,6 +152,12 @@ Memgator-only terms (not part of the XIFT protocol) are marked
 **Extension: `revocation`.** Active revocation binding via W3C BSL. Two-layer revocation (TTL + BSL), fail-closed, herd privacy. Core extension. Requires `governance`. See `xift-1.0-spec-extension-revocation.md`.
 
 **Extension: `quality`.** Metrics, confidence, and profile for a knowledge artifact. Silently ignorable by non-supporting receivers (no `protocol:extension:unknown_extension`). See `xift-1.0-spec-extension-quality.md`.
+
+**Extension: `ontology`.** Governed vocabulary exchange: a hash-pinned vocabulary **descriptor** (the sender's own vocabulary) plus reciprocal **alignment cells** negotiated on Channel 7 (SCS). The vocabulary-alignment substrate of the semantic channels (5/6/7); silently ignorable; metadata-only (never interprets the payload). See `xift-1.0-spec-extension-ontology.md`.
+
+**OntologyDescriptor.** The `ontology` extension block (Mechanism B): a dereferenceable JSON-LD 1.1 `@context` pinned by a `sha256:` hash, with an OPTIONAL reduced SKOS projection (a partial taxonomy, never the full graph) and OPTIONAL SHACL shapes. Describes only the sender's own vocabulary.
+
+**Alignment cell.** A flat, SSSOM-inspired correspondence (`subject_id`, `predicate_id` ∈ SKOS mapping relations, `object_id`, `alignment_score` ∈ [0,1], `score_function`, `method`, `calibrated`). Produced only by the Channel-7 SCS loop and carried in the signed synopsis; advisory by default. See `xift-1.0-spec-extension-ontology.md` §3.2.
 
 ### 3.3 Discovery Concepts
 

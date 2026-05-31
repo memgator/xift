@@ -168,7 +168,8 @@ interleaved for readability.
     "provenance",
     "encryption",
     "revocation",
-    "quality"
+    "quality",
+    "ontology"
   ],
   "supported_encryption_schemes": [
     "hpke-x25519-sha256-aes256gcm"
@@ -213,6 +214,11 @@ interleaved for readability.
     "energy_rating": "A"
   },
   "custodian_eligible": false,
+  "ontology": {
+    "supported_ontology_formats": ["json-ld", "skos"],
+    "alignment_methods": ["lexical+embedding", "llm-assisted"],
+    "vocabulary_iris": ["https://vocab.example.com/agent/v3/context.jsonld"]
+  },
   "identity_handshake": {
     "supported_methods": ["iatp-v1"],
     "endpoint": "https://api.example.com/xift/v1/handshake",
@@ -234,6 +240,7 @@ interleaved for readability.
 | `governance_constraints`   | object  | Receiver-side baseline constraints exposed to discovery.             |
 | `resource_costs`           | object  | Hints for cost-aware routing (§4.5).                                 |
 | `custodian_eligible`       | boolean | Whether this agent can take the Trust Custodian role (see Custodian spec). |
+| `ontology`                 | object  | OPTIONAL Mechanism-A advertisement of `ontology` support: `supported_ontology_formats` (subset of `json-ld`/`skos`/`shacl`), `alignment_methods` (subset of `lexical+embedding`/`llm-assisted`/`hybrid`), optional `vocabulary_iris`. Absent → no ontology support advertised. See `xift-1.0-spec-extension-ontology.md` §3.4. |
 | `capability_signature`     | string  | Ed25519 signature over JCS(capability document minus this field).    |
 | `signing_key_id`           | string  | Key used to sign the capability document.                            |
 

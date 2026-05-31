@@ -340,13 +340,15 @@ companion document:
 | `encryption`  | `xift-1.0-spec-extension-encryption.md`        | End-to-end encryption of payload (HPKE).                |
 | `revocation`  | `xift-1.0-spec-extension-revocation.md`        | Active revocation via W3C Bitstring Status List.        |
 | `quality`     | `xift-1.0-spec-extension-quality.md`           | Payload-adjacent quality, confidence and profile.       |
+| `ontology`    | `xift-1.0-spec-extension-ontology.md`          | Governed vocabulary descriptor and reciprocal alignment. |
 
 The first four (`governance`, `provenance`, `encryption`,
 `revocation`) are the **core extensions**: every conformant
 implementation MUST recognise them (declare them in
 `supported_extensions` or refuse envelopes that use them).
-The fifth (`quality`) is **silently ignorable**: receivers that do
-not declare it MUST NOT reject envelopes that carry it.
+The fifth (`quality`) and sixth (`ontology`) are **silently
+ignorable**: receivers that do not declare them MUST NOT reject
+envelopes that carry them.
 
 Combination rules (normative):
 
@@ -495,6 +497,7 @@ for the extension they describe; this section is an index.
 | `encryption`  | `xift-1.0-spec-extension-encryption.md`        | Yes (core extension)   | `governance.classification ∈ {sensitive, restricted}`. |
 | `revocation`  | `xift-1.0-spec-extension-revocation.md`        | Yes (core extension)   | Envelopes whose grant is subject to active revocation. Requires `governance`. |
 | `quality`     | `xift-1.0-spec-extension-quality.md`           | No (silently ignorable)| Never required. May accompany any envelope. |
+| `ontology`    | `xift-1.0-spec-extension-ontology.md`          | No (silently ignorable)| Never required. May accompany any envelope; SHOULD on Channel 6. |
 
 The four **core extensions** (`governance`, `provenance`,
 `encryption`, `revocation`) are recognised by every conformant
@@ -503,9 +506,11 @@ implementation: each MUST appear (or be explicitly absent) in
 (`xift-1.0-spec-channel-1.md` §3, §4). An envelope using a core
 extension that the receiver does not declare yields `protocol:extension:unknown_extension` (code 105).
 
-The fifth extension (`quality`) is **silently ignorable**: receivers
-that do not declare support MUST NOT reject envelopes that carry
-it. See `xift-1.0-spec-extension-quality.md` §4.
+The fifth (`quality`) and sixth (`ontology`) extensions are
+**silently ignorable**: receivers that do not declare support MUST
+NOT reject envelopes that carry them. See
+`xift-1.0-spec-extension-quality.md` §4 and
+`xift-1.0-spec-extension-ontology.md` §4.
 
 Cross-extension combination rules are restated at §3.2 of this
 document; per-extension behaviour, fields, error codes,
@@ -717,7 +722,7 @@ deviations. Conformance tests use defaults.
 | `payload_inline_size_max`                 | 64 KB   | Payload    | Above this, use `content_ref`.                                                 |
 | `lineage_chain_max`                       | 10      | Provenance | Max recursive depth of `parent_ids`.                                           |
 | `policy_tags_count_max`                   | 16      | Policy     | Max `policy_tags` entries.                                                     |
-| `extensions_count_max`                    | 8       | Transport  | Max declared extensions (currently 5 defined: 4 core + `quality`; room for 3). |
+| `extensions_count_max`                    | 8       | Transport  | Max declared extensions (currently 6 defined: 4 core + `quality` + `ontology`; room for 2). |
 | `mesh_p2p_hard_limit`                     | 50      | Mesh       | Max agents in P2P mesh without Trust Custodian. Hard limit.                    |
 | `mesh_custodian_activation_threshold`     | 25      | Mesh       | Agent count at which custodian-eligible agents MUST activate.                  |
 | `mesh_custodian_deactivation_threshold`   | 15      | Mesh       | Deactivation with hysteresis to prevent flapping.                              |

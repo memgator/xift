@@ -1,7 +1,7 @@
 ---
 title: XIFT 1.0 — Error Taxonomy and Category Registry (Steering Document)
-status: draft (v0.9)
-date: 2026-05-30
+status: draft (v0.10)
+date: 2026-05-31
 visibility: public
 authors:
   - Memgator architecture working group
@@ -91,7 +91,7 @@ code. The canonical codes are:
 |----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------|
 | protocol | 100–199 | 101 auth_failed, 102 invalid_argument, 103 rate_limit_exceeded, 104 not_found, 105 failed_precondition, 106 unavailable, 107 deadline_exceeded, 108 resource_exhausted, 109 aborted, 110 internal, 111 unimplemented, 112 version_unsupported |
 | policy   | 200–299 | 201 unauthorized, 202 limit_exhausted, 203 precondition_failed, 204 data_protection_violation, 205 scope_not_accepted, 206 trust_below_threshold, 207 consent_invalid |
-| model    | 300–399 | 301 ambiguous_context, 302 unmapped_ontology, 303 confidence_low (no v1.0 wire codes catalogued here)                                          |
+| model    | 300–399 | 301 ambiguous_context, 302 unmapped_ontology, 303 confidence_low (first catalogued by the `ontology` extension — §10quater)                    |
 | custom   | 900–999 | per-deployment; `domain` = reverse-DNS deployment id                                                                                          |
 
 Category `domain` segments: `channel1`…`channel7` for channel-specific
@@ -99,9 +99,9 @@ conditions; cross-channel topics include `crypto`, `schema`, `rate`,
 `size`, `transport`, `version`, `identity`, `lineage`, `revocation`,
 `replay`, `egress`, `extension`, `encryption`, `integrity`, `trust`,
 `financial`, `scope`, `gdpr`, `memory`, `governance`, `provenance`,
-`quality`, `consent`. The extension `domain` segments (`governance`,
-`provenance`, `quality`) reuse the extension name as the category
-domain, as `encryption` and `revocation` already do. `consent` is the
+`quality`, `ontology`, `consent`. The extension `domain` segments
+(`governance`, `provenance`, `quality`, `ontology`) reuse the extension
+name as the category domain, as `encryption` and `revocation` already do. `consent` is the
 cross-channel topic for step-up / additional-assurance conditions
 (core §8.6), distinct from the channel-1 handshake-assurance warning.
 
@@ -398,6 +398,35 @@ values surfaces a generic `policy:governance:policy_rejection`.
 | 207  | `policy:governance:consent_vc_invalid`                  | policy | error    | governance | VC at `consent_vc_ref` does not validate.                         | no        | `PolicyCedar` | `Sender` | Provide a valid consent VC; re-issue.                           | governance §7  | (spec) |
 | 207  | `policy:governance:consent_vc_hash_mismatch`            | policy | error    | governance | `consent_vc_hash` does not match the fetched VC.                  | no        | `PolicyCedar` | `Sender` | Recompute `consent_vc_hash` over the canonical VC; re-issue.    | governance §7  | (spec) |
 | 204  | `policy:provenance:anonymization_evidence_insufficient` | policy | error    | provenance | `anonymization_evidence` does not satisfy the receiver's policy.  | no        | `PolicyCedar` | `Sender` | Strengthen the anonymization method/parameters; re-attest.      | provenance §7  | (spec) |
+
+---
+
+## 10quater. Extension `ontology` Errors and Warnings (`domain=ontology`)
+
+The silently-ignorable `ontology` extension is the **first concrete
+consumer of the `model` layer (300–399)** — the layer deliberately left
+thinly enumerated (§2 note) for conditions an auxiliary LLM resolves at
+runtime. These categories reuse the existing per-layer codes and add only
+`category` strings (no wire change, per ADR-XIFT-ERROR-MODEL-001). Unlike
+`quality`, `ontology` registers codes because the consuming party verifies
+a hash-pin (`102`) and the alignment loop surfaces model-tier outcomes.
+The `@context` hash-pin failure routes on **`102`** for registry
+consistency — every hash-mismatch (`payload_hash_mismatch`,
+`bsl_hash_mismatch`) routes there.
+
+| Code | Category                                  | Layer    | Severity | Scope    | Trigger                                                                                  | Retryable | Emitter             | Observer       | Remedy                                                                       | Source       | Status |
+|------|-------------------------------------------|----------|----------|----------|------------------------------------------------------------------------------------------|-----------|---------------------|----------------|------------------------------------------------------------------------------|--------------|--------|
+| 102  | `protocol:ontology:context_hash_mismatch` | protocol | error    | ontology | Fetched `@context` body does not match the declared `sha256:` hash-pin (integrity).      | no        | any channel handler | `Sender`       | Re-fetch the `@context`; re-issue the descriptor with the current hash-pin.  | ontology §7  | (spec) |
+| 302  | `model:ontology:unmapped_concept`         | model    | error    | ontology | A required concept has no acceptable correspondence in the counterparty's vocabulary.    | no        | `Channel7Handler`   | counterparty   | Negotiate a broader/narrower correspondence, or treat the concept as opaque. | ontology §7  | (spec) |
+| 301  | `model:ontology:context_unresolvable`     | model    | error    | ontology | The auxiliary model cannot resolve the asserted correspondence (ambiguous context).      | no        | `Channel7Handler`   | counterparty   | Supply a scoped SKOS projection / SHACL shapes; re-run the alignment probe.  | ontology §7  | (spec) |
+| 303  | `model:ontology:alignment_score_low`      | model    | warning  | ontology | A cell's `alignment_score` is below confidence (advisory default; no hard gate).         | n/a       | `Channel7Handler`   | counterparty   | Treat as advisory; gate promotion via `ontology_alignment_min_score` if set. | ontology §7  | (spec) |
+
+> **Advisory by default.** `model:ontology:alignment_score_low` (303) is a
+> **warning**; a low or borderline alignment never rejects on its own. A
+> **hard reject** at the model layer occurs only when a deployment configures
+> `ontology_alignment_min_score` and a required cell falls below it (then a
+> `302`/`301` `error`-severity condition is raised), mirroring the `quality`
+> soft-acceptance model.
 
 ---
 

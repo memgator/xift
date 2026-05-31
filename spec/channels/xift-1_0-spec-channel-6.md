@@ -138,6 +138,11 @@ Authorization: Signature <signed-challenge>
   "purpose_of_use": "operations",
   "handoff_endpoint": "https://announcer.example.com/xift/v1/envelopes",
   "policy_tags": ["model-training-prohibited"],
+  "ontology": {
+    "context_iri": "https://vocab.example.com/agent/v3/context.jsonld",
+    "context_hash": "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "format": "json-ld"
+  },
   "announcement_signature": "<base64url-bytes>",
   "signing_key_id": "did:web:org.example.com:agent:announcer#key-1"
 }
@@ -153,11 +158,27 @@ Authorization: Signature <signed-challenge>
 | `discoverable_capabilities`    | Bloom filter of capabilities the artifact relates to.              |
 | `memory_scope` / `classification` / `pii_classification` / `purpose_of_use` | Replicate envelope governance for matching. |
 | `handoff_endpoint`             | Where the subscriber fetches the envelope via Channel 2.           |
+| `ontology`                     | OPTIONAL vocabulary descriptor (`xift-1.0-spec-extension-ontology.md` §2). **SHOULD** be present (§4.1). |
 | `announcement_signature`       | Ed25519 signature.                                                 |
 
 The abstract MUST NOT contain PII. Egress validation
 (core §8.4) applies: announcer's policy engine MUST validate
 the announcement before publication.
+
+### 4.1 Vocabulary Descriptor and the Unaligned-Match Penalty
+
+SIEA matching runs **asynchronously over an index** with no live
+dialogue, so an announcement that carries no `ontology` descriptor
+cannot be vocabulary-disambiguated and is matched on raw embeddings — a
+known false-positive bottleneck. An announcer therefore **SHOULD**
+attach the descriptor (Mechanism B,
+`xift-1.0-spec-extension-ontology.md` §2). Because `ontology` is
+silently ignorable, this is a SHOULD, not a MUST: an announcement
+without a descriptor is **never rejected**, but the matcher (the
+Custodian when mediated) applies a **degraded composite score** by
+multiplying it by `siea_unaligned_match_penalty` (§9). Only Channel 6
+needs this penalty, because only it indexes; Channel 5 resolves
+alignment downstream via SCS and applies no penalty.
 
 ---
 
@@ -252,6 +273,7 @@ Channel 6-specific parameters extending core §10:
 | `siea_abstract_size_max`                           | 1 KB        | Maximum announcement abstract size.                           |
 | `siea_global_fanout_per_announcement_max`          | 100         | Maximum subscribers notified per announcement.                |
 | `siea_max_active_subscriptions_per_did`            | 32          | Per-agent subscription quota.                                 |
+| `siea_unaligned_match_penalty`                     | 0.5         | Multiplier applied to the composite score of an announcement carrying no `ontology` descriptor (§4.1). Degrades, never rejects. |
 
 ---
 
