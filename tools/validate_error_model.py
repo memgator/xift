@@ -110,6 +110,19 @@ ORPHAN_ALLOW_PREFIXES = (
     "protocol:custodian:preattestation_",
 )
 
+# Categories defined by an accepted ADR but not yet written into the public
+# registry (the registry edit is the deferred public spec-edit phase). Exact
+# allow-list — narrow on purpose, so a typo in these domains is still caught.
+# Remove each entry when its row lands in xift-error-taxonomy.md.
+ORPHAN_ALLOW_EXACT = {
+    # ADR-XIFT-ONTOLOGY-001 §2.5
+    "protocol:ontology:context_hash_mismatch",
+    # ADR-XIFT-BUNDLE-001 §6
+    "protocol:bundle:bundle_index_out_of_range",
+    "protocol:bundle:bundle_incomplete",
+    "protocol:bundle:bundle_too_large",
+}
+
 # sub_category mnemonics that legitimately appear under more than one domain.
 MULTI_DOMAIN_ALLOW = {"session_token_invalid"}
 
@@ -395,7 +408,8 @@ def scan_file(path, registry, mode, multi_domain, warn_only, findings):
             layer, domain, sub = cat.split(":")
             multi_domain.setdefault(sub, set()).add((domain, path, lineno))
             if registry is not None and cat not in registry.rows:
-                if not any(cat.startswith(p) for p in ORPHAN_ALLOW_PREFIXES):
+                if (cat not in ORPHAN_ALLOW_EXACT
+                        and not any(cat.startswith(p) for p in ORPHAN_ALLOW_PREFIXES)):
                     findings.append(Finding("orphan", True, path, lineno,
                                             f"{cat} not in registry"))
 
@@ -462,7 +476,8 @@ def check_schemas(schemas_dir, registry, findings):
             for m in BARE_CAT_RE.finditer(s):
                 cat = m.group(1)
                 if registry is not None and cat not in registry.rows:
-                    if not any(cat.startswith(pre) for pre in ORPHAN_ALLOW_PREFIXES):
+                    if (cat not in ORPHAN_ALLOW_EXACT
+                            and not any(cat.startswith(pre) for pre in ORPHAN_ALLOW_PREFIXES)):
                         findings.append(Finding("schema", True, p, 0,
                                                 f"embedded category {cat} not in "
                                                 f"registry"))
