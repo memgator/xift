@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xift.dev/schemas/v1.0/extension-quality.schema.json",
+  "title": "XIFT v1.0 Extension: quality",
+  "description": "Artifact-level quality metrics (silently-ignorable extension). Source: xift-1.0-spec-extension-quality.md §2, §3.",
+  "type": "object",
+  "additionalProperties": false,
+  "x-xift-jcs-note": "JCS signing (RFC 8785, core §8.3): this block is canonicalized as part of the envelope and signed in full (Ed25519). The numeric fields here (rates and counts) are the only float-bearing extension fields. The JCS pre-signing canonicalizer MUST reject NaN, +Infinity, -Infinity and -0.0 as protocol:crypto:canonicalization_failed (102); JSON Schema cannot express this (minimum:0 accepts -0.0, and NaN/Infinity are not valid JSON), so it is enforced at canonicalization time, not here.",
+  "required": ["evaluated_by", "evaluated_at", "evaluation_window_seconds", "metrics"],
+  "properties": {
+    "evaluated_by": { "$ref": "#/$defs/did_string" },
+    "evaluated_at": { "$ref": "#/$defs/date_time_utc" },
+    "evaluation_window_seconds": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "MUST be > 0 (spec §3)."
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["applied_count", "completion_rate", "fallback_rate"],
+      "x-xift-note": "Spec §3.1 invariant not expressible in pure JSON Schema: completion_rate + fallback_rate <= 1.0 (the residual is the share of outright failures). Enforce in code.",
+      "properties": {
+        "applied_count": { "type": "integer", "minimum": 0 },
+        "completion_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "fallback_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "user_acceptance_rate": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "x-xift-note": "Optional; MAY be null when not measured (spec §3.1)."
+        },
+        "downstream_promotion_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["self_assessed_confidence", "external_validation_count", "external_validators"],
+      "x-xift-note": "Spec §3.2 invariant not expressible in pure JSON Schema: external_validation_count == length(external_validators). Enforce in code.",
+      "properties": {
+        "self_assessed_confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "external_validation_count": { "type": "integer", "minimum": 0 },
+        "external_validators": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/did_string" }
+        }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_categories", "sample_size_indicator", "freshness_days"],
+      "properties": {
+        "task_categories": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "sample_size_indicator": {
+          "type": "string",
+          "enum": ["small", "medium", "large"]
+        },
+        "freshness_days": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 32767
+        }
+      }
+    }
+  },
+  "$defs": {
+    "did_string": { "type": "string", "pattern": "^did:[a-z]+:.+" },
+    "date_time_utc": { "type": "string", "format": "date-time" }
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xift.dev/schemas/v1.0/extension-provenance.schema.json",
+  "title": "XIFT v1.0 Extension: provenance",
+  "description": "Derivation lineage of a knowledge artifact (parents, operation, strata, anonymization evidence). Source: xift-1.0-spec-extension-provenance.md §2, §3.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "parent_ids",
+    "derivation_type",
+    "stratum_in",
+    "stratum_out",
+    "derivation_agent_did",
+    "derivation_timestamp"
+  ],
+  "properties": {
+    "parent_ids": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ulid_string" },
+      "minItems": 0,
+      "maxItems": 10,
+      "x-xift-note": "Empty array = leaf artifact. maxItems is lineage_chain_max (10, core §10)."
+    },
+    "derivation_type": {
+      "type": "string",
+      "enum": ["redaction", "transformation", "distillation", "augmentation", "synthesis", "extraction"]
+    },
+    "stratum_in": { "$ref": "#/$defs/stratum" },
+    "stratum_out": { "$ref": "#/$defs/stratum" },
+    "derivation_agent_did": { "$ref": "#/$defs/did_string" },
+    "derivation_timestamp": { "$ref": "#/$defs/date_time_utc" },
+    "derivation_method_hash": { "$ref": "#/$defs/sha256_hash" },
+    "anonymization_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "method_parameters", "evaluator_did", "evaluation_signature"],
+      "x-xift-note": "Conditionally REQUIRED when derivation_type=redaction AND the envelope transitions pii_classification from personal-identifiable/pseudonymized to anonymized (provenance §3.2; core §9.4). That transition depends on the parent envelope's PII state, which is not visible to this schema; enforce in code. Insufficient/rejected evidence yields policy:provenance:anonymization_evidence_insufficient (204). Note: evaluation_timestamp is OPTIONAL per spec.",
+      "properties": {
+        "method": { "type": "string" },
+        "method_parameters": { "type": "object", "additionalProperties": true },
+        "evaluator_did": { "$ref": "#/$defs/did_string" },
+        "evaluation_timestamp": { "$ref": "#/$defs/date_time_utc" },
+        "evaluation_signature": {
+          "type": "string",
+          "description": "Ed25519 signature by evaluator_did over the JCS-canonical attestation (base64url, not the prefixed-hex hash form)."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "did_string": { "type": "string", "pattern": "^did:[a-z]+:.+" },
+    "sha256_hash": { "type": "string", "pattern": "^sha256:[A-Fa-f0-9]{64}$" },
+    "ulid_string": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+    "date_time_utc": { "type": "string", "format": "date-time" },
+    "stratum": {
+      "type": "string",
+      "enum": ["working", "episodic", "semantic", "procedural"]
+    }
+  }
+}

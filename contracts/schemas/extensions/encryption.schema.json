@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xift.dev/schemas/v1.0/extension-encryption.schema.json",
+  "title": "XIFT v1.0 Extension: encryption",
+  "description": "End-to-end payload encryption metadata (HPKE / age). Source: xift-1.0-spec-extension-encryption.md §3, §4.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["scheme", "recipient_kid", "ephemeral_pubkey", "nonce", "aad_hash", "ciphertext_hash"],
+  "properties": {
+    "scheme": {
+      "type": "string",
+      "enum": ["hpke-x25519-sha256-aes256gcm", "hpke-x25519-sha256-chacha20poly1305", "age-x25519"]
+    },
+    "recipient_kid": {
+      "type": "string",
+      "description": "DID URL fragment resolving to the recipient's X25519 encryption key."
+    },
+    "ephemeral_pubkey": {
+      "type": "string",
+      "description": "Standard base64 (with padding) of the 32-byte X25519 ephemeral public key (RFC 9180 §5)."
+    },
+    "nonce": {
+      "type": "string",
+      "description": "Standard base64 (with padding) of the 12-byte (96-bit) AEAD nonce."
+    },
+    "aad_hash": { "$ref": "#/$defs/sha256_hash" },
+    "ciphertext_hash": { "$ref": "#/$defs/sha256_hash" }
+  },
+  "$defs": {
+    "sha256_hash": { "type": "string", "pattern": "^sha256:[A-Fa-f0-9]{64}$" }
+  }
+}

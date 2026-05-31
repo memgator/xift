@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xift.dev/schemas/v1.0/extension-governance.schema.json",
+  "title": "XIFT v1.0 Extension: governance",
+  "description": "Consent, classification, purpose-of-use and access-control metadata on a KnowledgeObject envelope. Source: xift-1.0-spec-extension-governance.md §2, §3.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["classification", "pii_classification", "purpose_of_use", "consent_until"],
+  "properties": {
+    "owner_did": { "$ref": "#/$defs/did_string" },
+    "agent_role": { "type": "string" },
+    "classification": {
+      "type": "string",
+      "enum": ["public", "internal", "confidential", "sensitive", "restricted"]
+    },
+    "pii_classification": {
+      "type": "string",
+      "enum": ["personal-identifiable", "pseudonymized", "anonymized", "non-personal"],
+      "default": "personal-identifiable"
+    },
+    "purpose_of_use": {
+      "type": "string",
+      "enum": ["service-delivery", "operations", "research", "audit", "training", "debugging", "marketing"]
+    },
+    "consent_vc_ref": { "type": "string", "format": "uri" },
+    "consent_vc_hash": { "$ref": "#/$defs/sha256_hash" },
+    "consent_until": { "$ref": "#/$defs/date_time_utc" },
+    "lineage_policy": {
+      "type": "string",
+      "enum": ["lax", "strict"],
+      "x-xift-note": "Contextual default per §3.8 (strict when pii_classification is personal-identifiable/pseudonymized, else lax). No static schema default."
+    },
+    "policy_tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "maxItems": 16
+    }
+  },
+  "dependentRequired": {
+    "consent_vc_ref": ["consent_vc_hash"],
+    "consent_vc_hash": ["consent_vc_ref"]
+  },
+  "allOf": [
+    {
+      "x-xift-note": "Enforces protocol:lineage:lineage_policy_inconsistent (105): when pii_classification is personal-identifiable or pseudonymized, lineage_policy MUST be 'strict' when present (absent defaults to strict per §3.8). This replaces the outdated 4-digit 'error 1009'.",
+      "if": {
+        "required": ["pii_classification"],
+        "properties": {
+          "pii_classification": { "enum": ["personal-identifiable", "pseudonymized"] }
+        }
+      },
+      "then": {
+        "properties": {
+          "lineage_policy": { "const": "strict" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "did_string": { "type": "string", "pattern": "^did:[a-z]+:.+" },
+    "sha256_hash": { "type": "string", "pattern": "^sha256:[A-Fa-f0-9]{64}$" },
+    "date_time_utc": { "type": "string", "format": "date-time" }
+  }
+}
