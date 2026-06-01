@@ -34,6 +34,44 @@
       "type": "array",
       "items": { "type": "string" },
       "maxItems": 16
+    },
+    "native_labels": {
+      "type": "array",
+      "description": "Source labelling system labels preserved verbatim, alongside the authoritative ordinal classification. Opaque to XIFT. Source: §3.10. Bounded by native_labels_count_max (total label records) and native_labels_bytes_max (serialized size), enforced at the protocol layer, not by maxItems here.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["scheme", "labels"],
+        "properties": {
+          "scheme": { "type": "string" },
+          "scheme_version": { "type": "string" },
+          "authority": { "type": "string" },
+          "tenant_ref": { "type": "string" },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id"],
+              "properties": {
+                "id": { "type": "string" },
+                "name": { "type": "string" },
+                "parents": { "type": "array", "items": { "type": "string" } },
+                "score": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["system", "value"],
+                  "properties": {
+                    "system": { "type": "string" },
+                    "value": { "type": "string" }
+                  }
+                },
+                "attributes": { "type": "object", "additionalProperties": true }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "dependentRequired": {

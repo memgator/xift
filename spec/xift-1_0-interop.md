@@ -117,6 +117,18 @@ with it. An A2A receiver that does not understand XIFT may ignore
 the metadata, but a receiver that does understand XIFT MUST honor
 it. The adapter ensures both behaviors are supported.
 
+Reference adapters for external sensitivity-labelling systems
+(Microsoft Purview, Google Sensitive Data Protection, AWS Macie)
+populate **both** representations of governance §3.3/§3.10: the
+mapped ordinal `classification` (authoritative for policy) and the
+verbatim `native_labels` record (for round-trip fidelity). Because a
+label record carries a stable opaque `id` (Purview label GUID, Google
+`infoType.name`) and its `tenant_ref` (Purview `SiteId`, GCP project),
+the adapter can reconstruct the source label on export even when the
+display `name` is unavailable cross-tenant. The adapter owns the
+consistency rule: the mapped `classification` MUST be at least as
+restrictive as the level the native scheme implies.
+
 ### 2.5 Principle: No Forced Adapter Adoption
 
 XIFT agents that only need pair-wise governed knowledge exchange do

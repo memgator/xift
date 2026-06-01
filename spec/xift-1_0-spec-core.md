@@ -722,6 +722,8 @@ deviations. Conformance tests use defaults.
 | `payload_inline_size_max`                 | 64 KB   | Payload    | Above this, use `content_ref`.                                                 |
 | `lineage_chain_max`                       | 10      | Provenance | Max recursive depth of `parent_ids`.                                           |
 | `policy_tags_count_max`                   | 16      | Policy     | Max `policy_tags` entries.                                                     |
+| `native_labels_count_max`                 | 32      | Policy     | Max total `native_labels` label records across all schemes (governance §3.10). |
+| `native_labels_bytes_max`                 | 4096    | Policy     | Max serialized size of the `native_labels` value (governance §3.10).           |
 | `extensions_count_max`                    | 8       | Transport  | Max declared extensions (currently 6 defined: 4 core + `quality` + `ontology`; room for 2). |
 | `mesh_p2p_hard_limit`                     | 50      | Mesh       | Max agents in P2P mesh without Trust Custodian. Hard limit.                    |
 | `mesh_custodian_activation_threshold`     | 25      | Mesh       | Agent count at which custodian-eligible agents MUST activate.                  |
