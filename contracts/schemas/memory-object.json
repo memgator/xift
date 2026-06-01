@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xift.dev/schemas/v1.0/memory-object.schema.json",
+  "title": "XIFT v1.0 KnowledgeObject Envelope",
+  "description": "The canonical XIFT envelope (KnowledgeObject; predecessor: MemoryObject). Flat JSON canonicalized per RFC 8785 (JCS) and signed with Ed25519. Mandatory blocks (Identity, Operational, Content, Security) are top-level fields; each declared extension is a top-level object keyed by the extension name. Source: xift-1.0-spec-core.md §3.3 (mandatory blocks), §3.4 (minimal example), §4/§8 (extensions, identity). Wire field names are frozen for protocol stability.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "envelope_id",
+    "protocol_version",
+    "extensions",
+    "agent_did",
+    "recipient_did",
+    "created_at",
+    "status",
+    "next_action",
+    "memory_scope",
+    "content_type",
+    "signing_key_id",
+    "canonical_signature"
+  ],
+  "properties": {
+    "envelope_id": {
+      "$ref": "#/$defs/ulid",
+      "description": "Identity block. Unique identifier for this envelope (core §3.3.1)."
+    },
+    "protocol_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Identity block. XIFT version; v1 is \"1.0\" (core §3.3.1)."
+    },
+    "extensions": {
+      "type": "array",
+      "description": "Identity block. Names of the opt-in extensions populated on this envelope (core §3.3.1, §4). MUST be consistent with the extension objects present; consistency is enforced at the protocol layer, not by this schema.",
+      "items": {
+        "type": "string",
+        "enum": ["governance", "provenance", "encryption", "revocation", "quality", "ontology"]
+      },
+      "uniqueItems": true,
+      "maxItems": 8
+    },
+    "agent_did": {
+      "$ref": "#/$defs/did_string",
+      "description": "Identity block. Emitting agent's DID (core §3.3.1, §8.2)."
+    },
+    "recipient_did": {
+      "$ref": "#/$defs/did_string",
+      "description": "Identity block. Authorized recipient agent's DID (core §3.3.1, §8.2)."
+    },
+    "correlation_id": {
+      "$ref": "#/$defs/ulid",
+      "description": "Identity block. OPTIONAL. envelope_id of the envelope this responds to (core §3.3.1)."
+    },
+    "created_at": {
+      "$ref": "#/$defs/date_time_utc",
+      "description": "Identity block. UTC timestamp, millisecond precision (core §3.3.1)."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["proposed", "shipped", "blocked", "failed"],
+      "description": "Operational block. Operational status of the artifact (core §3.3.2)."
+    },
+    "next_action": {
+      "type": "string",
+      "enum": ["store", "promote", "distill", "discard"],
+      "description": "Operational block. Non-binding processing hint for the receiver (core §3.3.2)."
+    },
+    "memory_scope": {
+      "type": "string",
+      "enum": ["working", "episodic", "semantic", "procedural"],
+      "description": "Operational block. CoALA stratum the knowledge targets (core §3.3.2). Frozen wire name."
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Operational block. OPTIONAL. Receiver-domain task correlation (core §3.3.2)."
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Operational block. OPTIONAL. Durable conversation identifier (core §3.3.2)."
+    },
+    "payload_inline": {
+      "type": "string",
+      "contentEncoding": "base64",
+      "pattern": "^[A-Za-z0-9+/]*={0,2}$",
+      "description": "Content block. Base64-encoded payload, at most payload_inline_size_max (core §10). Frozen wire name. Mutually exclusive with content_ref (see oneOf)."
+    },
+    "content_ref": {
+      "type": "string",
+      "format": "uri",
+      "description": "Content block. Locator for out-of-band payload retrieval (core §3.3.3). Frozen wire name. Mutually exclusive with payload_inline (see oneOf)."
+    },
+    "payload_hash": {
+      "$ref": "#/$defs/sha256_hash",
+      "description": "Content block. SHA-256 of the canonical payload. REQUIRED with content_ref, OPTIONAL with payload_inline (core §3.3.3). Frozen wire name."
+    },
+    "content_type": {
+      "type": "string",
+      "description": "Content block. MIME or domain-specific payload type (core §3.3.3). Frozen wire name."
+    },
+    "signing_key_id": {
+      "type": "string",
+      "description": "Security block. DID URL fragment identifying the signing key (core §3.3.4)."
+    },
+    "canonical_signature": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]+$",
+      "description": "Security block. Base64url-encoded Ed25519 signature over JCS(envelope minus this field) (core §3.3.4, §8.3). NOT the prefixed-hex hash form."
+    },
+
+    "governance": {
+      "$ref": "https://xift.dev/schemas/v1.0/extension-governance.schema.json",
+      "description": "Opt-in extension block. Present iff \"governance\" is listed in extensions."
+    },
+    "provenance": {
+      "$ref": "https://xift.dev/schemas/v1.0/extension-provenance.schema.json",
+      "description": "Opt-in extension block. Present iff \"provenance\" is listed in extensions."
+    },
+    "encryption": {
+      "$ref": "https://xift.dev/schemas/v1.0/extension-encryption.schema.json",
+      "description": "Opt-in extension block. Present iff \"encryption\" is listed in extensions."
+    },
+    "revocation": {
+      "$ref": "https://xift.dev/schemas/v1.0/extension-revocation.schema.json",
+      "description": "Opt-in extension block. Present iff \"revocation\" is listed in extensions. Requires governance (core §3.3.5 combination rule)."
+    },
+    "quality": {
+      "$ref": "https://xift.dev/schemas/v1.0/extension-quality.schema.json",
+      "description": "Opt-in extension block. Present iff \"quality\" is listed in extensions. Silently ignorable."
+    },
+    "ontology": {
+      "$ref": "https://xift.dev/schemas/v1.0/extension-ontology.schema.json",
+      "description": "Opt-in extension block. Present iff \"ontology\" is listed in extensions. Silently ignorable."
+    }
+  },
+  "oneOf": [
+    {
+      "required": ["payload_inline"],
+      "not": { "required": ["content_ref"] }
+    },
+    {
+      "required": ["content_ref", "payload_hash"],
+      "not": { "required": ["payload_inline"] }
+    }
+  ],
+  "dependentSchemas": {
+    "revocation": {
+      "x-xift-note": "core §3.3.5 / extension-revocation: the revocation extension requires governance to be present.",
+      "required": ["governance"]
+    }
+  },
+  "$defs": {
+    "ulid": {
+      "type": "string",
+      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+      "description": "Crockford ULID, 26 chars (core §3.3.1)."
+    },
+    "did_string": {
+      "type": "string",
+      "pattern": "^did:[a-z0-9]+:.+"
+    },
+    "sha256_hash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "description": "Prefixed lowercase-hex digest (core §3.3.3 canonical hash-string format)."
+    },
+    "date_time_utc": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}
