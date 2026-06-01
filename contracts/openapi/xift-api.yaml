@@ -1,0 +1,343 @@
+openapi: 3.1.0
+info:
+  title: XIFT v1.0 — Synchronous Channel API (Flow A subset)
+  version: "1.0"
+  description: >-
+    Synchronous (request/response) operations for the XIFT peer-to-peer
+    knowledge-exchange protocol. This document currently covers the Flow A
+    subset (peer-to-peer thematic discovery to direct handoff, no Trust
+    Custodian): Channel 1 (Discovery & Handshake) and Channel 5 (Semantic
+    Discovery Request). Channel 2 (Envelope Handoff) and the async channels
+    (4 SSE, 6 SIEA) are out of scope for this revision.
+
+
+    Authority: the normative specifications in `spec/` win over this contract.
+    Schemas are referenced from `../schemas/`. Error bodies follow the XIFT
+    error model (core §12, ADR-XIFT-ERROR-MODEL-001); the authoritative
+    category registry is `spec/xift-error-taxonomy.md`.
+  license:
+    name: See repository LICENSE
+servers:
+  - url: "{agentBaseUrl}/xift/v1"
+    description: >-
+      Per-agent base URL. In P2P Flow A each peer hosts its own endpoints,
+      advertised in the capability document `endpoints` map (Channel 1 §3).
+    variables:
+      agentBaseUrl:
+        default: https://agent.example.com
+        description: Origin of the agent's XIFT endpoints.
+
+tags:
+  - name: channel-1-discovery
+    description: Channel 1 — capability publication and discovery (pull).
+  - name: channel-1-handshake
+    description: Channel 1 — two-phase identity handshake.
+  - name: channel-5-sdr
+    description: Channel 5 — Semantic Discovery Request (SDR).
+
+paths:
+  /discovery/self:
+    put:
+      operationId: publishCapabilityAdvertisement
+      tags: [channel-1-discovery]
+      summary: Publish this agent's capability advertisement.
+      description: >-
+        Channel 1 §5. The publisher serves/registers its signed capability
+        advertisement. In P2P pull topology no external registration occurs;
+        this stores the advertisement the agent serves at GET /discovery/self.
+      security:
+        - signatureAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/capability-advertisement.schema.json
+      responses:
+        "201":
+          description: Advertisement accepted.
+        "401":
+          $ref: "#/components/responses/SignatureInvalid"
+        "403":
+          description: >-
+            Publisher trust score below indexing threshold
+            (policy:channel1:capability_trust_too_low_to_publish, 206).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/XiftError"
+        "422":
+          $ref: "#/components/responses/SchemaInvalid"
+    get:
+      operationId: getOwnCapabilityAdvertisement
+      tags: [channel-1-discovery]
+      summary: Serve this agent's own capability advertisement (P2P pull).
+      description: Channel 1 §5. Returns the agent's current signed advertisement.
+      responses:
+        "200":
+          $ref: "#/components/responses/CapabilityAdvertisement"
+        "404":
+          description: No advertisement published (protocol:channel1, 104).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/XiftError"
+
+  /discovery/{did}:
+    parameters:
+      - name: did
+        in: path
+        required: true
+        description: DID of the target agent whose advertisement is requested.
+        schema:
+          type: string
+          pattern: "^did:[a-z0-9]+:.+"
+    get:
+      operationId: discoverCapabilityAdvertisement
+      tags: [channel-1-discovery]
+      summary: Discover a peer's capability advertisement (pull).
+      description: >-
+        Channel 1 §6. The querier authenticates with a signed challenge; the
+        publisher applies governance_constraints and egress DLP before
+        releasing the advertisement (§8).
+      security:
+        - signatureAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/CapabilityAdvertisement"
+        "401":
+          $ref: "#/components/responses/SignatureInvalid"
+        "403":
+          description: >-
+            Querier trust below the publisher's min_trust_score_accepted
+            (policy:channel1:discovery_visibility_denied, 201), or querier DID
+            method not accepted (protocol:channel1:did_method_not_accepted, 105).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/XiftError"
+        "404":
+          description: No advertisement for this DID (protocol:channel1, 104).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/XiftError"
+        "410":
+          description: >-
+            Advertisement expired; refresh required
+            (protocol:channel1:capability_advertisement_expired, 105).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/XiftError"
+
+  /handshake/init:
+    post:
+      operationId: handshakeInit
+      tags: [channel-1-handshake]
+      summary: Begin the identity handshake (Phase A — method negotiation).
+      description: Channel 1 §7. Initiator proposes supported methods; responder selects one and issues a challenge.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/handshake.schema.json#/$defs/handshake_init_request
+      responses:
+        "200":
+          description: Method selected; challenge issued.
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/handshake.schema.json#/$defs/handshake_init_response
+        "412":
+          description: >-
+            No mutually supported method
+            (protocol:channel1:handshake_method_unsupported, 105).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/XiftError"
+
+  /handshake/complete:
+    post:
+      operationId: handshakeComplete
+      tags: [channel-1-handshake]
+      summary: Complete the identity handshake (Phase B output — session token).
+      description: >-
+        Channel 1 §7. Carries the method-specific proof; on success returns the
+        bearer session_token used on all subsequent channel requests
+        (channels-general §1.4, §2.3).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/handshake.schema.json#/$defs/handshake_complete_request
+      responses:
+        "200":
+          description: Mutual authentication succeeded; session token issued.
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/handshake.schema.json#/$defs/handshake_complete_response
+        "401":
+          description: >-
+            Proof verification failed
+            (protocol:channel1:session_token_invalid / auth_failed, 101).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/XiftError"
+        "408":
+          description: >-
+            Handshake exceeded the 200 ms budget / 500 ms cap
+            (protocol:channel1:handshake_timeout, 107).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/XiftError"
+
+  /sdr:
+    post:
+      operationId: semanticDiscoveryRequest
+      tags: [channel-5-sdr]
+      summary: Submit a Semantic Discovery Request (SDR).
+      description: >-
+        Channel 5 §3. The querier sends a signed XiftSemanticQuery; the peer
+        returns a ranked XiftSemanticResponse bundle (which MAY be partial). In
+        P2P Flow A the same query is scatter-gathered across peers (§9).
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/xift-semantic-query.schema.json
+      responses:
+        "200":
+          description: Ranked match bundle (final or partial).
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/xift-semantic-response.schema.json
+        "401":
+          description: >-
+            Session token invalid or expired
+            (protocol:channel1:session_token_invalid/expired, 101/105).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/XiftError"
+        "403":
+          description: >-
+            Query rejected by policy (e.g. egress / redaction;
+            policy:channel5:preview_redaction_insufficient, 204).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/XiftError"
+        "422":
+          $ref: "#/components/responses/SchemaInvalid"
+
+components:
+  securitySchemes:
+    signatureAuth:
+      type: http
+      scheme: signature
+      description: >-
+        Channel 1 discovery uses a signed challenge in the Authorization header
+        ("Authorization: Signature <signed-challenge>"). The exact signing
+        primitive is identity-provider-specific.
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: >-
+        Bearer session_token issued by /handshake/complete, presented on
+        Channel 2-7 requests (channels-general §1.4).
+  responses:
+    CapabilityAdvertisement:
+      description: A signed capability advertisement.
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/capability-advertisement.schema.json
+    SignatureInvalid:
+      description: >-
+        Capability or request signature failed verification
+        (protocol:channel1:capability_signature_invalid / auth_failed, 101).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/XiftError"
+    SchemaInvalid:
+      description: >-
+        Body failed schema validation
+        (protocol:channel1:capability_schema_invalid / invalid_argument, 102).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/XiftError"
+  schemas:
+    XiftError:
+      type: object
+      description: >-
+        The XIFT flat error/warning object (core §12.2, ADR-XIFT-ERROR-MODEL-001).
+        Signed in full per ADR-XIFT-ERROR-SIGNING-001 (JCS / Ed25519); only the
+        outer `sig` member is unsigned. The numeric `code` is the per-layer
+        routing axis; `category` (layer:domain:sub_category) is the source of
+        domain truth, registered in spec/xift-error-taxonomy.md.
+      additionalProperties: false
+      required: [code, layer, severity, category, machine_message]
+      properties:
+        code:
+          type: integer
+          description: Canonical per-layer code (core §12.1). Routing only; never domain meaning.
+        layer:
+          type: string
+          enum: [protocol, policy, model, custom]
+        severity:
+          type: string
+          enum: [error, warning]
+          description: error => rejected; warning => accepted with a flag. Orthogonal to code.
+        category:
+          type: string
+          pattern: "^[a-z]+:[a-z0-9]+:[a-z0-9_]+$"
+          description: layer:domain:sub_category namespaced string (core §12.5).
+        machine_message:
+          type: string
+          description: Structured, parseable, no PII. Always present.
+        human_message:
+          type: [string, "null"]
+          description: Natural language; typically present when layer == model. No PII.
+        context:
+          type: object
+          description: Optional flat map key -> scalar (one level, no nesting).
+          additionalProperties:
+            type: [string, number, boolean, "null"]
+        remediation_paths:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              type: { type: string }
+              label: { type: string }
+              uri: { type: string }
+              action: { type: string }
+        envelope_id:
+          type: [string, "null"]
+          description: The envelope (or query) this refers to.
+        correlation_id:
+          type: [string, "null"]
+        timestamp:
+          type: string
+          format: date-time
+        retryable:
+          type: boolean
+        retry_after_seconds:
+          type: [integer, "null"]
+        sig:
+          type: string
+          description: Base64url Ed25519 signature over JCS(error minus sig). The only unsigned member.

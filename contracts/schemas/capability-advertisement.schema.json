@@ -1,0 +1,296 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xift.dev/schemas/v1.0/capability-advertisement.schema.json",
+  "title": "XIFT v1.0 Capability Advertisement (Channel 1)",
+  "description": "The signed capability advertisement an agent publishes for discovery and serves on Channel 1 (Discovery & Handshake). The extended document is a strict superset of the baseline: every baseline field is present, and the §4.2 fields (channel_capabilities, capability_vector, resource_costs, custodian_eligible, ontology, mcp_servers) are OPTIONAL additions used when the agent participates in Channels 5-7 or interop. Signed with Ed25519 over JCS (RFC 8785) of all fields except capability_signature. Source: xift-1.0-spec-channel-1.md §3, §4.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "did",
+    "name",
+    "version",
+    "protocol_version",
+    "endpoints",
+    "supported_extensions",
+    "supported_did_methods",
+    "governance_constraints",
+    "identity_handshake",
+    "advertised_at",
+    "expires_at",
+    "capability_signature",
+    "signing_key_id"
+  ],
+  "properties": {
+    "did": {
+      "$ref": "#/$defs/did_string",
+      "description": "Advertising agent's DID. MUST match the resolved DID document (else protocol:channel1:capability_did_mismatch, 101)."
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable agent name."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Monotonic advertisement version; increments on each republication."
+    },
+    "protocol_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "XIFT version supported. v1: \"1.0\"."
+    },
+    "endpoints": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Per-channel endpoint URLs (§3). Semantic-channel endpoints (sdr/siea/scs) are OPTIONAL; present only when the agent participates in Channels 5-7.",
+      "properties": {
+        "xift_discovery_v1": { "type": "string", "format": "uri" },
+        "xift_handoff_v1": { "type": "string", "format": "uri" },
+        "xift_status_v1": { "type": "string", "format": "uri" },
+        "xift_changes_v1": { "type": "string", "format": "uri" },
+        "xift_sdr_v1": { "type": "string", "format": "uri" },
+        "xift_siea_v1": { "type": "string", "format": "uri" },
+        "xift_scs_v1": { "type": "string", "format": "uri" }
+      }
+    },
+    "supported_extensions": {
+      "type": "array",
+      "description": "Envelope extensions this agent processes (§3). Core extensions MUST be recognized; quality/ontology are silently ignorable.",
+      "items": {
+        "type": "string",
+        "enum": ["governance", "provenance", "encryption", "revocation", "quality", "ontology"]
+      },
+      "uniqueItems": true,
+      "maxItems": 8
+    },
+    "supported_encryption_schemes": {
+      "type": "array",
+      "description": "OPTIONAL. HPKE (or other) suites the agent accepts for the encryption extension.",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "supported_did_methods": {
+      "type": "array",
+      "description": "DID methods this agent can resolve. A querier whose DID method is absent is rejected with protocol:channel1:did_method_not_accepted (105).",
+      "items": { "type": "string", "pattern": "^did:[a-z0-9]+$" },
+      "uniqueItems": true,
+      "minItems": 1
+    },
+    "max_inline_size_kb": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "OPTIONAL. Largest inline payload accepted, in KB. Bounded by core §10 payload_inline_size_max (64 KB)."
+    },
+    "transport_modes": {
+      "type": "array",
+      "description": "OPTIONAL. Supported envelope transport modes.",
+      "items": { "type": "string", "enum": ["inline", "dial-back"] },
+      "uniqueItems": true
+    },
+    "channel_capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "OPTIONAL (§4.2). Per-channel parameters and feature flags for Channels 5-7.",
+      "properties": {
+        "sdr": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "embedding_models": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+            "max_concurrent_queries": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "siea": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "max_active_subscriptions": { "type": "integer", "minimum": 0 },
+            "broadcast_topology": { "type": "string", "enum": ["p2p", "custodian-mediated"] }
+          }
+        },
+        "scs": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "max_concurrent_sessions": { "type": "integer", "minimum": 0 },
+            "max_session_duration_seconds": { "type": "integer", "minimum": 0 },
+            "supports_smart_clustering": { "type": "boolean" },
+            "supports_consensus_voting": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "capability_vector": {
+      "description": "OPTIONAL (§4.3). Versioned Capability Vector(s). A single object, or an array when the agent publishes vectors under multiple embedding models.",
+      "oneOf": [
+        { "$ref": "#/$defs/capability_vector" },
+        { "type": "array", "items": { "$ref": "#/$defs/capability_vector" }, "minItems": 1 }
+      ]
+    },
+    "governance_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Receiver-side baseline constraints exposed at discovery time (§4.4). Hints, not contracts; the receiver's policy engine remains authoritative and MAY be stricter.",
+      "required": ["min_trust_score_accepted", "accepts_classifications", "accepts_pii_classifications"],
+      "properties": {
+        "min_trust_score_accepted": { "$ref": "#/$defs/trust_score" },
+        "accepts_classifications": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/classification" },
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "accepts_pii_classifications": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/pii_classification" },
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "accepts_memory_scopes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/memory_scope" },
+          "uniqueItems": true
+        },
+        "requires_signed_consent_vc": { "type": "boolean" }
+      }
+    },
+    "resource_costs": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "OPTIONAL (§4.5/§4.6). Soft routing hints; may be stale or inaccurate. Includes billing-aware fields for SDR cost filtering.",
+      "properties": {
+        "median_latency_ms": { "type": "number", "minimum": 0 },
+        "estimated_token_cost_per_query": {
+          "type": "number",
+          "minimum": 0,
+          "x-xift-note": "JCS/RFC 8785 serializes numbers canonically; producers SHOULD emit a stable decimal representation to keep the capability_signature reproducible."
+        },
+        "energy_rating": { "type": "string", "enum": ["A", "B", "C", "D", "E", "F"] },
+        "billing_enabled": { "type": "boolean" },
+        "accepted_currencies": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "accepted_rails": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "billing_models_offered": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "free_tier_available": { "type": "boolean" },
+        "free_tier_limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "envelopes_per_day": { "type": "integer", "minimum": 0 },
+            "max_classification": { "$ref": "#/$defs/classification" }
+          }
+        }
+      }
+    },
+    "custodian_eligible": {
+      "type": "boolean",
+      "description": "OPTIONAL (§4.2). Whether this agent can take the Trust Custodian role. Irrelevant to Flow A (no custodian)."
+    },
+    "ontology": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "OPTIONAL Mechanism-A advertisement of ontology support (§4.2, ADR-XIFT-ONTOLOGY-001). Absent => no ontology support advertised.",
+      "properties": {
+        "supported_ontology_formats": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["json-ld", "skos", "shacl"] },
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "alignment_methods": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["lexical+embedding", "llm-assisted", "hybrid"] },
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "vocabulary_iris": {
+          "type": "array",
+          "items": { "type": "string", "format": "uri" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "mcp_servers": {
+      "type": "array",
+      "description": "OPTIONAL (§4 intro). Interop hints describing MCP servers the agent exposes. Shape is interop-specific; left open.",
+      "items": { "type": "object" }
+    },
+    "identity_handshake": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Handshake entry point (§3, §7). Peers initiate the identity handshake here.",
+      "required": ["supported_methods", "endpoint"],
+      "properties": {
+        "supported_methods": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true,
+          "minItems": 1,
+          "description": "Handshake protocols supported (identity-provider-specific, e.g. \"iatp-v1\"). No overlap with the peer => protocol:channel1:handshake_method_unsupported (105)."
+        },
+        "endpoint": { "type": "string", "format": "uri" },
+        "session_token_ttl_seconds": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "advertised_at": {
+      "$ref": "#/$defs/date_time_utc",
+      "description": "When this advertisement was issued."
+    },
+    "expires_at": {
+      "$ref": "#/$defs/date_time_utc",
+      "description": "Lifecycle bound; agents MUST refresh before expiry (else protocol:channel1:capability_advertisement_expired, 105)."
+    },
+    "capability_signature": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]+$",
+      "description": "Base64url Ed25519 signature over JCS(advertisement minus this field). Receivers and Custodians MUST verify before using any field (§4.1)."
+    },
+    "signing_key_id": {
+      "type": "string",
+      "description": "DID URL fragment identifying the key that signed this advertisement."
+    }
+  },
+  "$defs": {
+    "did_string": {
+      "type": "string",
+      "pattern": "^did:[a-z0-9]+:.+"
+    },
+    "date_time_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "trust_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000,
+      "description": "XIFT trust score (core §10). Range [0, 1000], baseline 500."
+    },
+    "classification": {
+      "type": "string",
+      "enum": ["public", "internal", "confidential", "sensitive", "restricted"]
+    },
+    "pii_classification": {
+      "type": "string",
+      "enum": ["personal-identifiable", "pseudonymized", "anonymized", "non-personal"]
+    },
+    "memory_scope": {
+      "type": "string",
+      "enum": ["working", "episodic", "semantic", "procedural"]
+    },
+    "capability_vector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dimensions", "model"],
+      "description": "Versioned Capability Vector (§4.3). Implementations MUST publish model and dimensions for embedding compatibility.",
+      "properties": {
+        "embedding": { "type": "string", "contentEncoding": "base64", "description": "Dense competency vector." },
+        "dimensions": { "type": "integer", "minimum": 1, "description": "Vector dimensionality (typical 256 or 768)." },
+        "model": { "type": "string", "description": "Embedding model identifier." },
+        "bloom_filter": { "type": "string", "contentEncoding": "base64", "description": "Bloom filter over discrete capability tags." },
+        "spec_embedding": { "type": "string", "contentEncoding": "base64", "description": "Behavioral-specification embedding (alignment signals)." }
+      }
+    }
+  }
+}

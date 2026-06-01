@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xift.dev/schemas/v1.0/xift-semantic-response.schema.json",
+  "title": "XIFT v1.0 XiftSemanticResponse Bundle (Channel 5 SDR)",
+  "description": "The ranked bundle a responder (peer or Custodian) returns for a XiftSemanticQuery. Signed with Ed25519 over JCS(response minus responder_signature). May be partial (completed=false) when max_latency_ms is reached or aggregation is ongoing. Source: xift-1.0-spec-channel-5.md §5, §6, §7.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "query_id",
+    "responder_did",
+    "created_at",
+    "match_count",
+    "matches",
+    "completed",
+    "responder_signature",
+    "signing_key_id"
+  ],
+  "properties": {
+    "query_id": { "$ref": "#/$defs/ulid", "description": "Echoed from the original query." },
+    "responder_did": { "$ref": "#/$defs/did_string", "description": "DID of the responder (peer in Flow A; Custodian in mediated mode)." },
+    "created_at": { "$ref": "#/$defs/date_time_utc" },
+    "match_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of matches in this bundle; MAY be < max_results. SHOULD equal matches array length."
+    },
+    "matches": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/match" },
+      "description": "Ranked candidate matches. Across scatter-gather, duplicates by envelope_id_hint MUST be deduplicated by the querier (§9)."
+    },
+    "completed": {
+      "type": "boolean",
+      "description": "Whether this is the final response (true) or a partial one (false)."
+    },
+    "partial_reason": {
+      "type": "string",
+      "description": "Why the response is partial (timeout, ongoing aggregation). REQUIRED when completed=false."
+    },
+    "responder_signature": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]+$",
+      "description": "Base64url Ed25519 signature over JCS(response minus this field)."
+    },
+    "signing_key_id": { "type": "string", "description": "DID URL fragment identifying the signing key." }
+  },
+  "if": {
+    "properties": { "completed": { "const": false } },
+    "required": ["completed"]
+  },
+  "then": {
+    "required": ["partial_reason"],
+    "x-xift-note": "A partial bundle (completed=false) MUST state why via partial_reason (§5)."
+  },
+  "$defs": {
+    "match": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "A single candidate match (§6). preview MUST be PII-redacted and <= sdr_preview_size_max (200 chars, §11).",
+      "required": ["candidate_did", "composite_score", "handoff_endpoint"],
+      "properties": {
+        "candidate_did": { "$ref": "#/$defs/did_string", "description": "DID of the agent holding the candidate artifact." },
+        "envelope_id_hint": { "$ref": "#/$defs/ulid", "description": "OPTIONAL. Specific artifact identifier, if known; dedup key across scatter-gather." },
+        "composite_score": { "$ref": "#/$defs/unit_interval", "description": "Aggregate match score in [0.0, 1.0] (§7). Aggregation function is implementation-defined." },
+        "score_breakdown": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Four-dimensional decomposition (§7), each in [0.0, 1.0].",
+          "properties": {
+            "semantic_alignment": { "$ref": "#/$defs/unit_interval", "description": "Query/candidate embedding similarity; vocabulary-aware when the query attaches an ontology descriptor (§7.1)." },
+            "policy_compatibility": { "$ref": "#/$defs/unit_interval" },
+            "resource_fit": { "$ref": "#/$defs/unit_interval" },
+            "spec_similarity": { "$ref": "#/$defs/unit_interval" }
+          }
+        },
+        "preview": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Short, PII-redacted summary fragment to aid candidate selection. Truncated to sdr_preview_size_max (§11)."
+        },
+        "memory_scope": { "$ref": "#/$defs/memory_scope" },
+        "classification": { "$ref": "#/$defs/classification" },
+        "pii_classification": { "$ref": "#/$defs/pii_classification" },
+        "purpose_compatible": { "type": "boolean", "description": "Whether the candidate's declared purpose_of_use matches the query." },
+        "handoff_endpoint": { "type": "string", "format": "uri", "description": "URL to fetch the full envelope via Channel 2." },
+        "scs_endpoint": { "type": "string", "format": "uri", "description": "OPTIONAL. URL to open Channel 7 (SCS) with this candidate." }
+      }
+    },
+    "ulid": {
+      "type": "string",
+      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "did_string": {
+      "type": "string",
+      "pattern": "^did:[a-z0-9]+:.+"
+    },
+    "date_time_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "unit_interval": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "x-xift-note": "JCS/RFC 8785 canonicalizes numbers; responders SHOULD emit a stable decimal representation to keep responder_signature reproducible."
+    },
+    "classification": {
+      "type": "string",
+      "enum": ["public", "internal", "confidential", "sensitive", "restricted"]
+    },
+    "pii_classification": {
+      "type": "string",
+      "enum": ["personal-identifiable", "pseudonymized", "anonymized", "non-personal"]
+    },
+    "memory_scope": {
+      "type": "string",
+      "enum": ["working", "episodic", "semantic", "procedural"]
+    }
+  }
+}

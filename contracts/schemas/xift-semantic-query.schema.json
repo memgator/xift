@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xift.dev/schemas/v1.0/xift-semantic-query.schema.json",
+  "title": "XIFT v1.0 XiftSemanticQuery (Channel 5 SDR)",
+  "description": "The Semantic Discovery Request a querier sends to a peer (or Custodian) to find experience by meaning. POST /xift/v1/sdr. Signed with Ed25519 over JCS(query minus query_signature). In peer-to-peer Flow A the same query is scatter-gathered across N peers (§9). Bounded by sdr_query_size_max (4 KB, §11), enforced at the protocol layer, not by this schema. Source: xift-1.0-spec-channel-5.md §3, §4.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "query_id",
+    "querier_did",
+    "created_at",
+    "query_text",
+    "scope_redaction_applied",
+    "query_signature",
+    "signing_key_id"
+  ],
+  "properties": {
+    "query_id": { "$ref": "#/$defs/ulid", "description": "Unique identifier for this query; echoed in the response." },
+    "querier_did": { "$ref": "#/$defs/did_string" },
+    "created_at": { "$ref": "#/$defs/date_time_utc" },
+    "query_text": { "type": "string", "description": "Natural-language statement of need. MUST be PII-redacted before sending (§10)." },
+    "query_embedding": {
+      "type": "string",
+      "contentEncoding": "base64",
+      "description": "OPTIONAL. Pre-computed embedding so the responder can skip server-side encoding. Requires embedding_model."
+    },
+    "embedding_model": {
+      "type": "string",
+      "description": "Identifier of the embedding model used. REQUIRED when query_embedding is present."
+    },
+    "bloom_required_capabilities": {
+      "type": "string",
+      "contentEncoding": "base64",
+      "description": "OPTIONAL. Bloom filter of capabilities the responder MUST have (sub-millisecond pre-filter)."
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Constraints on acceptable responders and returned artifacts (§4). max_classification / max_pii_classification are egress constraints (§4, core §8.4).",
+      "properties": {
+        "min_trust_score": { "$ref": "#/$defs/trust_score", "description": "Responder trust score MUST be >= this." },
+        "max_classification": { "$ref": "#/$defs/classification", "description": "Returned artifacts MUST have classification <= this." },
+        "max_pii_classification": { "$ref": "#/$defs/pii_classification", "description": "Returned artifacts MUST have pii_classification <= this (anonymized < pseudonymized < personal-identifiable)." },
+        "purpose_of_use": { "$ref": "#/$defs/purpose_of_use" },
+        "memory_scopes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/memory_scope" },
+          "uniqueItems": true
+        },
+        "max_results": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50,
+          "description": "Maximum candidate matches to return. Absolute cap sdr_max_results_hard_cap = 50 (§11)."
+        },
+        "max_latency_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Cutoff for waiting on responses; partial results accepted. Default sdr_max_latency_default_ms = 2000 (§11)."
+        },
+        "cost_budget_tokens": { "type": "integer", "minimum": 0, "description": "Soft hint for budget-aware routing." },
+        "max_cost_per_result": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "OPTIONAL billing constraint (§4.1). Responders priced above this are excluded.",
+          "required": ["amount", "currency"],
+          "properties": {
+            "amount": {
+              "type": "string",
+              "description": "Decimal amount as a string to preserve precision.",
+              "x-xift-note": "String-typed on purpose: avoids float rounding and keeps JCS/RFC 8785 canonicalization of the signed query reproducible."
+            },
+            "currency": { "type": "string" }
+          }
+        }
+      }
+    },
+    "policy_tags_required": {
+      "type": "array",
+      "description": "OPTIONAL. Tags the responding artifacts MUST carry. MUST align with purpose_of_use (§10).",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "maxItems": 16
+    },
+    "scope_redaction_applied": {
+      "type": "boolean",
+      "description": "Asserts the querier has redacted PII from query_text (§10). Falsely asserting true is a policy violation (policy:channel5:preview_redaction_insufficient, 204)."
+    },
+    "ontology": {
+      "$ref": "https://xift.dev/schemas/v1.0/extension-ontology.schema.json",
+      "description": "OPTIONAL vocabulary descriptor (§7.1, ADR-XIFT-ONTOLOGY-001). When present, the responder computes vocabulary-aware semantic_alignment. Absence carries no Channel-5 penalty; unresolved alignment escalates to Channel 7 (SCS)."
+    },
+    "query_signature": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]+$",
+      "description": "Base64url Ed25519 signature over JCS(query minus this field). Responders MUST verify before processing (§3)."
+    },
+    "signing_key_id": { "type": "string", "description": "DID URL fragment identifying the signing key." }
+  },
+  "dependentRequired": {
+    "query_embedding": ["embedding_model"]
+  },
+  "$defs": {
+    "ulid": {
+      "type": "string",
+      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "did_string": {
+      "type": "string",
+      "pattern": "^did:[a-z0-9]+:.+"
+    },
+    "date_time_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "trust_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "classification": {
+      "type": "string",
+      "enum": ["public", "internal", "confidential", "sensitive", "restricted"]
+    },
+    "pii_classification": {
+      "type": "string",
+      "enum": ["personal-identifiable", "pseudonymized", "anonymized", "non-personal"]
+    },
+    "memory_scope": {
+      "type": "string",
+      "enum": ["working", "episodic", "semantic", "procedural"]
+    },
+    "purpose_of_use": {
+      "type": "string",
+      "enum": ["service-delivery", "operations", "research", "audit", "training", "debugging", "marketing"]
+    }
+  }
+}

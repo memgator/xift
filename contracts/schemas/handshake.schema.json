@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xift.dev/schemas/v1.0/handshake.schema.json",
+  "title": "XIFT v1.0 Identity Handshake Messages (Channel 1)",
+  "description": "Request/response bodies for the two-phase identity handshake (Channel 1 §7, cross-channel primitive in channels-general §2). XIFT specifies Phase A (method negotiation) and the OUTPUT of Phase B (session token); Phase B internals are identity-provider-specific and are carried inside the open `initiator_proof` / `responder_proof` / `trust_score_assertion` objects. Each message shape is a named definition under $defs so OpenAPI/AsyncAPI can reference it directly; the root oneOf allows standalone validation of any single handshake message.",
+  "oneOf": [
+    { "$ref": "#/$defs/handshake_init_request" },
+    { "$ref": "#/$defs/handshake_init_response" },
+    { "$ref": "#/$defs/handshake_complete_request" },
+    { "$ref": "#/$defs/handshake_complete_response" }
+  ],
+  "$defs": {
+    "handshake_init_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "title": "Handshake Init Request (Phase A)",
+      "description": "POST /xift/v1/handshake/init. Initiator proposes the methods it supports.",
+      "required": ["initiator_did", "supported_methods"],
+      "properties": {
+        "initiator_did": { "$ref": "#/$defs/did_string" },
+        "supported_methods": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true,
+          "minItems": 1,
+          "description": "Handshake methods the initiator supports (e.g. \"iatp-v1\"). No overlap with the responder => protocol:channel1:handshake_method_unsupported (105)."
+        }
+      }
+    },
+    "handshake_init_response": {
+      "type": "object",
+      "additionalProperties": false,
+      "title": "Handshake Init Response (Phase A)",
+      "description": "Responder selects a mutually supported method and issues a challenge for Phase B.",
+      "required": ["method", "challenge_nonce"],
+      "properties": {
+        "method": {
+          "type": "string",
+          "description": "The single method selected from the intersection of both parties' supported_methods."
+        },
+        "challenge_nonce": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "description": "Base64url challenge the initiator must answer in the complete request (replay protection)."
+        },
+        "responder_did": { "$ref": "#/$defs/did_string" },
+        "session_token_ttl_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "TTL the responder intends to apply to the issued session token."
+        }
+      }
+    },
+    "handshake_complete_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "title": "Handshake Complete Request (Phase B output)",
+      "description": "POST /xift/v1/handshake/complete. Carries the method-specific proof answering the challenge, plus an optional trust-score assertion.",
+      "required": ["initiator_proof"],
+      "properties": {
+        "initiator_did": { "$ref": "#/$defs/did_string" },
+        "initiator_proof": {
+          "$ref": "#/$defs/method_specific",
+          "description": "Method-specific proof of identity answering challenge_nonce. Opaque to XIFT; shape depends on the selected method."
+        },
+        "trust_score_assertion": {
+          "$ref": "#/$defs/method_specific",
+          "description": "OPTIONAL method-specific assertion of the initiator's trust score (e.g. a verifiable credential or reference). Opaque to XIFT."
+        }
+      }
+    },
+    "handshake_complete_response": {
+      "type": "object",
+      "additionalProperties": false,
+      "title": "Handshake Complete Response (Phase B output)",
+      "description": "Successful completion yields a bearer session token used on all subsequent channel requests (Authorization: Bearer; channels-general §1.4, §2.3).",
+      "required": ["session_token", "session_expires_at", "responder_proof"],
+      "properties": {
+        "session_token": {
+          "type": "string",
+          "description": "Bearer token authorizing subsequent Channel 2-7 requests. Invalid/forged => protocol:channel1:session_token_invalid (101); past expiry => protocol:channel1:session_token_expired (105)."
+        },
+        "session_expires_at": { "$ref": "#/$defs/date_time_utc" },
+        "responder_trust_score": {
+          "$ref": "#/$defs/trust_score",
+          "description": "The responder's trust score, disclosed to the initiator. No 700 Custodian gate applies in peer-to-peer Flow A; baseline is 500 (core §10)."
+        },
+        "responder_proof": {
+          "$ref": "#/$defs/method_specific",
+          "description": "Method-specific proof of the responder's identity (mutual authentication). Opaque to XIFT."
+        }
+      }
+    },
+    "did_string": {
+      "type": "string",
+      "pattern": "^did:[a-z0-9]+:.+"
+    },
+    "date_time_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "trust_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "method_specific": {
+      "type": "object",
+      "additionalProperties": true,
+      "x-xift-note": "Intentionally open: contents depend on the selected identity-provider handshake method (Phase B). XIFT does not constrain the internal shape; the protocol layer validates it against the negotiated method."
+    }
+  }
+}
