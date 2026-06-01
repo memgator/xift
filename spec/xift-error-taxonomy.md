@@ -1,6 +1,6 @@
 ---
 title: XIFT 1.0 — Error Taxonomy and Category Registry (Steering Document)
-status: draft (v0.10)
+status: draft (v0.11)
 date: 2026-05-31
 visibility: public
 authors:
@@ -394,6 +394,7 @@ values surfaces a generic `policy:governance:policy_rejection`.
 | 201  | `policy:governance:purpose_of_use_mismatch`             | policy | error    | governance | Declared `purpose_of_use` not authorized for this recipient.       | no        | `PolicyCedar` | `Sender` | Re-issue under an authorized `purpose_of_use`.                  | governance §7  | (spec) |
 | 201  | `policy:governance:classification_too_high`             | policy | error    | governance | Receiver policy rejects this `classification` sensitivity level.   | no        | `PolicyCedar` | `Sender` | Lower the classification (if legitimate) or use another receiver.| governance §7  | (spec) |
 | 201  | `policy:governance:agent_role_not_recognized`           | policy | error    | governance | Declared `agent_role` not in the receiver's role taxonomy.        | no        | `PolicyCedar` | `Sender` | Use a recognized role or rely on fine-grained ABAC attributes.  | governance §7  | (spec) |
+| 201  | `policy:governance:native_labels_inconsistent`          | policy | error    | governance | Recognised `native_labels` (governance §3.10) imply a stricter level than the mapped `classification`. | no        | `PolicyCedar` | `Sender` | Raise `classification` to match the native labels, or correct the labels; re-issue. | governance §7  | (spec) |
 | 203  | `policy:governance:consent_unsupportable`               | policy | error    | governance | Receiver cannot honor the declared `consent_until`.               | no        | `PolicyCedar` | `Sender` | Shorten `consent_until` or negotiate the receiver's capability. | governance §7  | (spec) |
 | 207  | `policy:governance:consent_vc_invalid`                  | policy | error    | governance | VC at `consent_vc_ref` does not validate.                         | no        | `PolicyCedar` | `Sender` | Provide a valid consent VC; re-issue.                           | governance §7  | (spec) |
 | 207  | `policy:governance:consent_vc_hash_mismatch`            | policy | error    | governance | `consent_vc_hash` does not match the fetched VC.                  | no        | `PolicyCedar` | `Sender` | Recompute `consent_vc_hash` over the canonical VC; re-issue.    | governance §7  | (spec) |

@@ -1,6 +1,6 @@
 ---
 title: XIFT 1.0 — Extension `governance`
-status: draft (v1.0)
+status: draft (v1.1)
 date: 2026-05-24
 visibility: public
 authors:
@@ -250,6 +250,83 @@ Emerging conventions:
 These are policy inputs, not protocol directives. Maximum
 `policy_tags_count_max` per envelope (core §10).
 
+### 3.10 `native_labels` (Optional)
+
+Preserves the **source labelling system's** sensitivity labels verbatim,
+alongside the mapped ordinal `classification` (§3.3). It exists for
+round-trip fidelity and native-scheme policy; it never replaces the
+ordinal. The value is an **array of scheme-scoped records** and is
+**opaque to XIFT**: the protocol preserves and round-trips it but does
+not parse it for any protocol decision (per ADR-XIFT-GOVERNANCE-LABELS-001).
+
+The shape generalises how the two dominant systems model labels —
+Microsoft Purview (MIP label metadata: a per-tenant label GUID/`SiteId`
+plus key/value attributes) and Google Sensitive Data Protection
+(`infoType.name` plus `sensitivityScore`) — neither of which is a rigid
+root→leaf path.
+
+```json
+"native_labels": [
+  {
+    "scheme": "ms-purview",
+    "scheme_version": "2026-01",
+    "authority": "did:web:contoso.com",
+    "tenant_ref": "cb46c030-1825-4e81-a295-151c039dbf02",
+    "labels": [
+      {
+        "id": "2096f6a2-d2f7-48be-b329-b73aaa526e5d",
+        "name": "Confidential",
+        "parents": ["8c1e6a4b-..."],
+        "score": { "system": "priority", "value": "75" },
+        "attributes": { "SetDate": "2018-11-08T21:13:16-0800", "Method": "Privileged" }
+      }
+    ]
+  }
+]
+```
+
+Scheme record:
+
+| Field            | Type   | Required | Description                                                                                                  |
+|------------------|--------|----------|--------------------------------------------------------------------------------------------------------------|
+| `scheme`         | string | yes      | Identifier of the source labelling system. **Open string** (NOT a closed enum). Recommended: `ms-purview`, `google-dlp`, `aws-macie`; org-specific schemes MAY use a URI. |
+| `scheme_version` | string | no       | Scheme/version qualifier.                                                                                    |
+| `authority`      | string | no       | DID/URI of the entity that owns the scheme or tenant.                                                        |
+| `tenant_ref`     | string | no       | Tenant/project scope within the scheme (Purview `SiteId`, GCP project): the stable home of the `id` namespace. |
+| `labels`         | array  | yes      | Label records (below). MAY be the empty array `[]`.                                                          |
+
+Label record (every field except `id` is OPTIONAL; a foreign-tenant label
+may arrive as a bare `id`):
+
+| Field        | Type            | Required | Description                                                                                                       |
+|--------------|-----------------|----------|-------------------------------------------------------------------------------------------------------------------|
+| `id`         | string          | yes      | Stable opaque identifier within `scheme`/`tenant_ref` (Purview label GUID, Google `infoType.name`). Authoritative for cross-tenant identity; survives when `name` does not. |
+| `name`       | string          | no       | Human display name. **Advisory only**; MAY be absent (Purview shows the GUID, not the name, across tenants).      |
+| `parents`    | array of string | no       | `id`s of parent labels/groups — a loose hierarchy, not a forced path.                                             |
+| `score`      | object          | no       | Native ordinal/score `{ "system": string, "value": string }`. Preserved verbatim; XIFT does not interpret it.     |
+| `attributes` | object          | no       | Free key/value map (`additionalProperties` permitted) carrying source metadata verbatim.                          |
+
+`classification` (§3.3) remains REQUIRED and authoritative for every
+protocol-level ordinal comparison and egress check. `native_labels` rules:
+
+- A receiver that does not recognise a `scheme` MUST NOT reject the
+  envelope on that basis; it MAY ignore that record. This block is
+  **silently ignorable**, like the `quality` extension.
+- The mapped `classification` MUST be at least as restrictive as the level
+  any present scheme implies. Emitting `native_labels` that imply a stricter
+  level than `classification` is an egress failure (§5).
+- A receiver that recognises a `scheme` and computes a stricter implied
+  level than `classification` MAY reject with
+  `policy:governance:native_labels_inconsistent` (201). Fail-safe to the
+  stricter interpretation.
+- Bounded by `native_labels_count_max` (total label records across schemes)
+  and `native_labels_bytes_max` (serialized size of the whole value), core
+  §10. Exceeding either is an envelope-validation rejection.
+- When `classification ≥ sensitive` and the `encryption` extension is
+  present, `native_labels` is carried inside the ciphertext (the labels can
+  themselves be disclosive); the ordinal `classification` stays cleartext
+  for intermediary policy.
+
 ---
 
 ## 4. Receiver Behaviour
@@ -299,15 +376,22 @@ Per core §8.4 (Egress Validation), the sender MUST validate the
   grant if its own policy permits).
 - The sender MUST ensure `consent_until` lies in the future at
   emission time.
+- When `native_labels` (§3.10) is present, the sender MUST ensure the
+  mapped `classification` is at least as restrictive as the level any
+  declared scheme implies; otherwise egress fails
+  (`protocol:egress:egress_validation_failed`, 105) and the envelope MUST
+  NOT be transmitted. The sender MUST also keep `native_labels` within
+  `native_labels_count_max` / `native_labels_bytes_max` (core §10).
 
 ---
 
 ## 6. Extension Parameters
 
 `governance` reuses the core parameters of `xift-1.0-spec-core.md`
-§10. No `governance`-specific parameters are added by this
-specification beyond `policy_tags_count_max` (already in core §10,
-default 16).
+§10, including `policy_tags_count_max` (default 16) and the two
+`native_labels` bounds added for §3.10: `native_labels_count_max`
+(default 32) and `native_labels_bytes_max` (default 4096). The
+defaults live in core §10 and are restated here for locality.
 
 ---
 
@@ -330,6 +414,7 @@ per-layer set (core §12.1). Do not mint new numeric codes here.
 | 201  | `policy:governance:purpose_of_use_mismatch`               | Declared purpose not authorized for recipient.          |
 | 201  | `policy:governance:classification_too_high`               | Receiver policy rejects this sensitivity level.         |
 | 201  | `policy:governance:agent_role_not_recognized`             | Declared `agent_role` not in receiver's taxonomy.       |
+| 201  | `policy:governance:native_labels_inconsistent`            | Recognised `native_labels` (§3.10) imply a stricter level than `classification`. |
 | 203  | `policy:governance:consent_unsupportable`                 | Receiver cannot honor `consent_until`.                  |
 | 204  | `policy:provenance:anonymization_evidence_insufficient`   | Evidence does not satisfy policy.                       |
 | 206  | `policy:trust:trust_score_below_threshold`                | Sender trust score below receiver requirement.          |
@@ -426,6 +511,10 @@ conformance suite (anchored in core Appendix B and channels-general
 | GOV-05 | Envelope with `consent_vc_hash` mismatching the fetched VC is rejected with error `policy:governance:consent_vc_hash_mismatch` (207). |
 | GOV-06 | Egress validation against recipient's `accepts_classifications` rejects an envelope whose classification exceeds the recipient's bounds, with error `protocol:egress:egress_validation_failed` (105). |
 | GOV-07 | A `governance` block present without `classification`, `pii_classification`, or `purpose_of_use` is rejected at envelope validation. |
+| GOV-08 | Envelope with multi-scheme `native_labels` (§3.10) is accepted; a scheme-aware receiver surfaces the records, and a label whose `name` is absent is still identified by its `id`. |
+| GOV-09 | Envelope with a `native_labels` record whose `scheme` is unknown to the receiver is accepted (silently ignorable); the receiver MUST NOT raise `protocol:extension:unknown_extension` (105). |
+| GOV-10 | A receiver that recognises a `scheme` and computes a stricter implied level than `classification` rejects with `policy:governance:native_labels_inconsistent` (201). |
+| GOV-11 | Envelope whose `native_labels` exceeds `native_labels_count_max` or `native_labels_bytes_max` (core §10) is rejected at envelope validation. |
 
 ---
 
