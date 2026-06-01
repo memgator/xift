@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xift.dev/schemas/v1.0/extension-revocation.schema.json",
+  "title": "XIFT v1.0 Extension: revocation",
+  "description": "Active revocation via a W3C Bitstring Status List (BSL). Source: xift-1.0-spec-extension-revocation.md §2, §3.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status_list_url", "status_list_index", "status_list_hash"],
+  "properties": {
+    "status_list_url": { "type": "string", "format": "uri" },
+    "status_list_index": {
+      "type": "integer",
+      "minimum": 0,
+      "x-xift-note": "MUST be less than the BSL's length; the upper bound depends on the fetched BSL and is not statically expressible."
+    },
+    "status_list_hash": { "$ref": "#/$defs/sha256_hash" },
+    "max_staleness_seconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 300,
+      "x-xift-note": "Per-artifact cap that may only TIGHTEN bsl_max_staleness_seconds (300, core §10), never relax it. When absent, the receiver applies the 300 s default at runtime (not a schema default)."
+    }
+  },
+  "$defs": {
+    "sha256_hash": { "type": "string", "pattern": "^sha256:[A-Fa-f0-9]{64}$" }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xift.dev/schemas/v1.0/extension-ontology.schema.json",
+  "title": "XIFT v1.0 Extension: ontology",
+  "description": "Governed vocabulary descriptor (silently-ignorable extension, Mechanism B). The block carries ONLY the sender's own vocabulary descriptor; bilateral alignment cells ($defs/alignment_cell) are produced by the Channel-7 SCS loop and carried in the signed synopsis, not in this envelope block. Source: xift-1.0-spec-extension-ontology.md §2, §3.",
+  "type": "object",
+  "additionalProperties": false,
+  "x-xift-jcs-note": "JCS signing (RFC 8785, core §8.3): this block is canonicalized as part of the envelope and signed in full (Ed25519). alignment_score (in $defs/alignment_cell) is the only float-bearing field; the JCS pre-signing canonicalizer MUST reject NaN, +Infinity, -Infinity and -0.0 as protocol:crypto:canonicalization_failed (102). JSON Schema cannot express this, so it is enforced at canonicalization time, not here.",
+  "required": ["context_iri", "context_hash", "format"],
+  "properties": {
+    "context_iri": {
+      "type": "string",
+      "format": "uri",
+      "description": "Dereferenceable JSON-LD 1.1 @context for the sender's vocabulary (spec §3.1)."
+    },
+    "context_hash": { "$ref": "#/$defs/sha256_pin" },
+    "format": {
+      "type": "string",
+      "enum": ["json-ld", "skos", "shacl"],
+      "description": "Serialization of the declared vocabulary (spec §3.1); MUST be one the emitter advertised (channel-1 §4)."
+    },
+    "skos_projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "OPTIONAL reduced SKOS view; a PARTIAL taxonomy, never the full graph (spec §3.1.1).",
+      "required": ["concepts"],
+      "properties": {
+        "concepts": {
+          "type": "array",
+          "maxItems": 256,
+          "x-xift-note": "maxItems reflects the default ontology_projection_max_concepts (spec §6); a deployment MAY lower it. The privacy invariant (full graph NOT recoverable) is enforced at egress, not here.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id"],
+            "properties": {
+              "id": { "type": "string" },
+              "pref_label": { "type": "string" },
+              "broader": { "type": "array", "items": { "type": "string" } },
+              "narrower": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "shacl_shapes": {
+      "type": ["object", "null"],
+      "description": "OPTIONAL SHACL shapes constraining the vocabulary; MAY be null (spec §3.1)."
+    }
+  },
+  "$defs": {
+    "sha256_pin": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "Prefixed lowercase-hex hash-pin per core §3.3.3."
+    },
+    "iri_string": { "type": "string", "format": "uri" },
+    "alignment_cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "SSSOM-inspired flat correspondence record, produced by the Channel-7 SCS loop and carried in the signed synopsis (spec §3.2). Not part of this envelope block.",
+      "required": ["subject_id", "predicate_id", "object_id", "alignment_score", "score_function", "method", "calibrated"],
+      "properties": {
+        "subject_id": { "$ref": "#/$defs/iri_string" },
+        "object_id": { "$ref": "#/$defs/iri_string" },
+        "predicate_id": {
+          "type": "string",
+          "enum": ["skos:exactMatch", "skos:closeMatch", "skos:broadMatch", "skos:narrowMatch", "skos:relatedMatch"]
+        },
+        "alignment_score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "score_function": {
+          "type": "string",
+          "enum": ["lexical_jaccard", "embedding_cosine", "hybrid_weighted", "llm_calibrated"],
+          "x-xift-note": "Spec §3.3.1 invariant not expressible in pure JSON Schema: a model-tier score_function (llm_calibrated) implies method == llm-assisted. Enforce in code."
+        },
+        "method": {
+          "type": "string",
+          "enum": ["lexical", "embedding", "llm-assisted", "manual"]
+        },
+        "calibrated": { "type": "boolean" },
+        "mapping_justification": { "type": "string" }
+      }
+    }
+  }
+}

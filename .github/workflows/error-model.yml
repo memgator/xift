@@ -1,0 +1,34 @@
+# Public gate: full error-model / category-registry validation.
+# Self-contained — the registry and specs are co-located in this repo, so no
+# sibling checkout is needed. Runs as its own Python job, decoupled from cargo.
+name: error-model
+
+on:
+  push:
+    paths:
+      - 'spec/**'
+      - 'contracts/schemas/extensions/**'
+      - 'tools/validate_error_model.py'
+      - '.github/workflows/error-model.yml'
+  pull_request:
+    paths:
+      - 'spec/**'
+      - 'contracts/schemas/extensions/**'
+      - 'tools/validate_error_model.py'
+      - '.github/workflows/error-model.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Validate error model (full mode)
+        run: |
+          python3 tools/validate_error_model.py \
+            --registry spec/xift-error-taxonomy.md \
+            --docs 'spec/**/*.md' \
+            --schemas contracts/schemas/extensions \
+            --report
