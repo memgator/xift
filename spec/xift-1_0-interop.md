@@ -1,6 +1,6 @@
 ---
 title: XIFT 1.0 — Interoperability Profile
-status: draft (v1.0 — core companion)
+status: draft (v1.1 — core companion)
 date: 2026-05-21
 visibility: public
 authors:
@@ -792,16 +792,16 @@ does not interact with A2A or MCP peers is conformant without
 implementing any of this. For implementations that DO claim Interop
 conformance, the following tests apply:
 
-| Suite | Name                                          | Description                                         |
-|-------|-----------------------------------------------|-----------------------------------------------------|
-| C60   | A2A Adapter round-trip                        | XIFT envelope wrapped in A2A DataPart, decoded, signature verifies. |
-| C61   | A2A Adapter signature preservation            | A2A intermediate cannot tamper without detection.   |
-| C62   | A2A Agent Card xift extension parsing         | XIFT-aware peer discovers XIFT endpoints via A2A card. |
-| C63   | MCP capability publication via bloom filter   | Querier can discover MCP-tool-capable agents via SDR. |
-| C64   | MCP tool invocation provenance                | Artifact carries valid `tool_invocation` block.     |
-| C65   | MCP resource subscription → SIEA              | Resource change triggers SIEA announcement.         |
-| C66   | Triple-protocol identity consistency          | Same DID resolves consistently across XIFT, A2A, MCP. |
-| C67   | Adapter does NOT subsume                      | XIFT-only operations (SDR, BSL) still require XIFT channels. |
+| Suite  | Name                                          | Description                                         |
+|--------|-----------------------------------------------|-----------------------------------------------------|
+| IOP.01 | A2A Adapter round-trip                        | XIFT envelope wrapped in A2A DataPart, decoded, signature verifies. |
+| IOP.02 | A2A Adapter signature preservation            | A2A intermediate cannot tamper without detection.   |
+| IOP.03 | A2A Agent Card xift extension parsing         | XIFT-aware peer discovers XIFT endpoints via A2A card. |
+| IOP.04 | MCP capability publication via bloom filter   | Querier can discover MCP-tool-capable agents via SDR. |
+| IOP.05 | MCP tool invocation provenance                | Artifact carries valid `tool_invocation` block.     |
+| IOP.06 | MCP resource subscription → SIEA              | Resource change triggers SIEA announcement.         |
+| IOP.07 | Triple-protocol identity consistency          | Same DID resolves consistently across XIFT, A2A, MCP. |
+| IOP.08 | Adapter does NOT subsume                      | XIFT-only operations (SDR, BSL) still require XIFT channels. |
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: XIFT 1.0 — Trust Custodian Specification
-status: draft (v1.0)
+status: draft (v1.1)
 date: 2026-05-21
 visibility: public
 authors:
@@ -913,7 +913,7 @@ Custodian-specific suites:
 | CUS.12 | SIEA fanout cap enforcement          | Cap respected; deprioritization signaled.                   |
 | CUS.13 | Custodian threat resistance          | Compromised Custodian cannot decrypt, cannot forge.         |
 | CUS.14 | Custodian deactivating drain         | In-flight requests complete; new requests redirected.       |
-| CUS.15 | Mesh threshold transition            | Mesh lifecycle `Dormant ↔ Warmable ↔ Active`; activation at 25, deactivation at 15, P2P hard limit 50. (Formerly C32 in channels-general §13; overlaps CUS.02/CUS.03 — dedup pending.) |
+| CUS.15 | Mesh lifecycle state machine         | Mesh state-name transitions `Dormant ↔ Warmable ↔ Active` occur as specified, and the P2P hard limit (50) is enforced. The threshold *values* (activate 25 / deactivate 15) and anti-flap hysteresis are covered by CUS.02 / CUS.03. (Formerly C32 in channels-general §13.) |
 
 ---
 
