@@ -42,7 +42,7 @@ an XIFT mesh.
 | File | Description |
 |---|---|
 | `xift-1.0-spec-core.md` | Core protocol: envelope schema (`KnowledgeObject`), three-layer model, identity layer, lineage rules, normative parameters, error model, threat model, cryptography. Extensions §4 is an index pointing to the 5 extension docs. |
-| `xift-1.0-spec-channels-general.md` | Cross-channel conventions: transport, authentication, back-pressure, identity handshake primitive, conformance test categories C20–C33, billing-related error codes (reserved). |
+| `xift-1.0-spec-channels-general.md` | Cross-channel conventions: transport, authentication, back-pressure, identity handshake primitive, conformance test categories C1.NN–C7.NN / CX.NN (semantic per-channel IDs), billing-related error codes (reserved). |
 | `xift-1.0-spec-channel-1.md` | Channel 1: Discovery & Handshake. Capability advertisement (baseline + extended), VCV, governance constraints, identity handshake flow. |
 | `xift-1.0-spec-channel-2.md` | Channel 2: Envelope Handoff. Inline and content-ref (dial-back) modes, storage-mediated handoff, egress DLP, billing-aware receipt. |
 | `xift-1.0-spec-channel-3.md` | Channel 3: Status Verification (BSL Pull). W3C Bitstring Status List, caching, fail-closed, herd privacy. |

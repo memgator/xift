@@ -1255,22 +1255,22 @@ ADR. No envelope structure changes anticipated.
 
 ## Appendix B — Conformance Test Categories
 
-| Suite | Name                              | Description                                         |
-|-------|-----------------------------------|-----------------------------------------------------|
-| C1    | Envelope round-trip               | Sign, transmit, verify; tamper, expect rejection.   |
-| C2    | JCS canonicalization invariance   | Same envelope, different serializations, same sig.  |
-| C3    | Grant lifecycle                   | TTL expiry; BSL revocation; combined.               |
-| C4    | Extension capability negotiation  | Unsupported extension → `protocol:extension:unknown_extension` (105).                       |
-| C5    | Dial-back                         | Valid/invalid recipient signatures.                 |
-| C6    | Lineage lax + strict              | Lax: no cascade. Strict: cascade. Downgrade: `protocol:lineage:lineage_policy_inconsistent` (105).  |
-| C7    | Classification fail-safes         | Missing `pii_classification` defaults to personal.  |
-| C8    | Encryption mandate                | Sensitive/restricted without encryption → `protocol:encryption:mandatory_encryption_missing` (105).     |
-| C9    | Error/warning routing             | Errors reject, warnings accept.                     |
-| C10   | Anonymization evidence            | Strict→lax with/without evidence.                   |
-| C11   | Back-pressure                     | 429 + Retry-After; sender honors backoff.           |
-| C12   | Parameter enforcement             | Each §10 parameter enforced correctly.              |
-| C13   | Egress validation                 | Sender validates recipient before emission.         |
-| C14   | Step-up authentication            | `policy:consent:additional_assurance_required` (207) triggers re-auth flow.                 |
+| Suite   | Name                              | Description                                         |
+|---------|-----------------------------------|-----------------------------------------------------|
+| CORE.01 | Envelope round-trip               | Sign, transmit, verify; tamper, expect rejection.   |
+| CORE.02 | JCS canonicalization invariance   | Same envelope, different serializations, same sig.  |
+| CORE.03 | Grant lifecycle                   | TTL expiry; BSL revocation; combined.               |
+| CORE.04 | Extension capability negotiation  | Unsupported extension → `protocol:extension:unknown_extension` (105).                       |
+| CORE.05 | Dial-back                         | Valid/invalid recipient signatures.                 |
+| CORE.06 | Lineage lax + strict              | Lax: no cascade. Strict: cascade. Downgrade: `protocol:lineage:lineage_policy_inconsistent` (105).  |
+| CORE.07 | Classification fail-safes         | Missing `pii_classification` defaults to personal.  |
+| CORE.08 | Encryption mandate                | Sensitive/restricted without encryption → `protocol:encryption:mandatory_encryption_missing` (105).     |
+| CORE.09 | Error/warning routing             | Errors reject, warnings accept.                     |
+| CORE.10 | Anonymization evidence            | Strict→lax with/without evidence.                   |
+| CORE.11 | Back-pressure                     | 429 + Retry-After; sender honors backoff.           |
+| CORE.12 | Parameter enforcement             | Each §10 parameter enforced correctly.              |
+| CORE.13 | Egress validation                 | Sender validates recipient before emission.         |
+| CORE.14 | Step-up authentication            | `policy:consent:additional_assurance_required` (207) triggers re-auth flow.                 |
 
 ---
 

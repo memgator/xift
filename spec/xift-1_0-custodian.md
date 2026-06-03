@@ -897,22 +897,23 @@ parameters.
 Extends `xift-1.0-spec-channels-general.md` §13 with
 Custodian-specific suites:
 
-| Suite | Name                                 | Description                                                 |
-| ----- | ------------------------------------ | ----------------------------------------------------------- |
-| C40   | Custodian state machine              | Verify all transitions in §2 work correctly.                |
-| C41   | Activation threshold enforcement     | Custodian activates at 25, deactivates at 15.               |
-| C42   | Hysteresis verification              | No flapping between 15 and 25 with oscillating mesh.        |
-| C43   | Leader election determinism          | Same inputs produce same elected primary across nodes.      |
-| C44   | Split-brain resolution               | Two warming Custodians for same service converge to one.    |
-| C45   | Capability registration + Δ-gossip   | Full lifecycle including deltas.                            |
-| C46   | BSL delegation and aggregation       | Issuer delegates, Custodian serves, change propagates.      |
-| C47   | Identity cache hit/miss/invalidation | Cache behaviour under TTL, key rotation, manual invalidate. |
-| C48   | Failover recovery                    | All three services recover within bounded time.             |
-| C49   | Degraded P2P mode                    | Mesh operates without active Custodian.                     |
-| C50   | Multi-Custodian topology             | Three services on three different agents work correctly.    |
-| C51   | SIEA fanout cap enforcement          | Cap respected; deprioritization signaled.                   |
-| C52   | Custodian threat resistance          | Compromised Custodian cannot decrypt, cannot forge.         |
-| C53   | Custodian deactivating drain         | In-flight requests complete; new requests redirected.       |
+| Suite  | Name                                 | Description                                                 |
+| ------ | ------------------------------------ | ----------------------------------------------------------- |
+| CUS.01 | Custodian state machine              | Verify all transitions in §2 work correctly.                |
+| CUS.02 | Activation threshold enforcement     | Custodian activates at 25, deactivates at 15.               |
+| CUS.03 | Hysteresis verification              | No flapping between 15 and 25 with oscillating mesh.        |
+| CUS.04 | Leader election determinism          | Same inputs produce same elected primary across nodes.      |
+| CUS.05 | Split-brain resolution               | Two warming Custodians for same service converge to one.    |
+| CUS.06 | Capability registration + Δ-gossip   | Full lifecycle including deltas.                            |
+| CUS.07 | BSL delegation and aggregation       | Issuer delegates, Custodian serves, change propagates.      |
+| CUS.08 | Identity cache hit/miss/invalidation | Cache behaviour under TTL, key rotation, manual invalidate. |
+| CUS.09 | Failover recovery                    | All three services recover within bounded time.             |
+| CUS.10 | Degraded P2P mode                    | Mesh operates without active Custodian.                     |
+| CUS.11 | Multi-Custodian topology             | Three services on three different agents work correctly.    |
+| CUS.12 | SIEA fanout cap enforcement          | Cap respected; deprioritization signaled.                   |
+| CUS.13 | Custodian threat resistance          | Compromised Custodian cannot decrypt, cannot forge.         |
+| CUS.14 | Custodian deactivating drain         | In-flight requests complete; new requests redirected.       |
+| CUS.15 | Mesh threshold transition            | Mesh lifecycle `Dormant ↔ Warmable ↔ Active`; activation at 25, deactivation at 15, P2P hard limit 50. (Formerly C32 in channels-general §13; overlaps CUS.02/CUS.03 — dedup pending.) |
 
 ---
 
