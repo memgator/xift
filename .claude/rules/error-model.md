@@ -9,7 +9,7 @@ paths:
 # XIFT error model rule
 
 Applies when editing any spec, the error taxonomy/registry, or Rust error types.
-Established by ADR-XIFT-ERROR-MODEL-001, -SIGNING-001, -MIGRATION-001 (xift-internal).
+Established by ADR-XIFT-ERROR-MODEL-001, -SIGNING-001, -MIGRATION-001.
 
 ## The three orthogonal axes
 

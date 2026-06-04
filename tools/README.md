@@ -9,10 +9,9 @@ grammar, per-layer numeric bands, category↔code pairing, orphan and
 multi-domain detection, and cross-checks against `xift-error-taxonomy.md`
 and the per-extension JSON Schemas.
 
-This file is the **canonical** copy; the private sibling
-(`../xift-internal/tools/validate_error_model.py`) is kept byte-identical
-by a drift guard. See ADR-XIFT-ERROR-MODEL-001 / -SIGNING-001 /
--MIGRATION-001.
+This file is the **canonical** copy of the linter. The governing
+decisions are cited by ID (ADR-XIFT-ERROR-MODEL-001 / -SIGNING-001 /
+-MIGRATION-001).
 
 Python 3 standard library only (`jsonschema` is an optional extra used by
 the schema sub-check). Each check is tagged `[subset]` (registry-

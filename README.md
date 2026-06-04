@@ -14,11 +14,8 @@ designed to be **host-agnostic**: any AI agent runtime (Memgator,
 OpenClaw, custom shells) can embed the XIFT crates and participate in
 an XIFT mesh.
 
-This repository is **public** and holds the normative specifications,
-the interoperability contracts, and the Rust reference implementation.
-Planning artifacts — ADRs, research, steering documents, and Kiro
-tasks — live in the **private** sibling repository `xift-internal`
-(see [Two-repo layout](#two-repo-layout)).
+This repository holds the normative specifications, the
+interoperability contracts, and the Rust reference implementation.
 
 ## Key Design Decisions
 
@@ -55,15 +52,6 @@ tasks — live in the **private** sibling repository `xift-internal`
 | `docs/` | Reader-facing guides (getting started, implementing XIFT, threat-model deep dive). |
 | `policies/` | Cedar and JDM (Zen) policy skeletons referenced by the governance extension. |
 | `tools/` | Repository tooling — see `tools/README.md`. |
-
-## Two-repo layout
-
-- `xift` (this repo, public): specs, contracts, `rust/` reference impl, examples, tests.
-- `xift-internal` (private sibling): ADRs, research, steering docs, `.kiro/` tasks.
-
-**Public/private boundary (strict).** Public files reference an ADR by
-**ID only** (e.g. "per ADR-XIFT-ERROR-MODEL-001"), never its rationale.
-ADR prose, research notes, and internal deliberation never land here.
 
 ## Document map
 
@@ -152,8 +140,8 @@ The numeric `code` is a small immutable per-layer routing set; the
 truth. There is no numeric `financial` layer — billing is
 `policy:financial:*`. Error objects are flat and signed in full
 (Ed25519 over JCS / RFC 8785). The authoritative category registry is
-`spec/xift-error-taxonomy.md`. See ADR-XIFT-ERROR-MODEL-001,
--SIGNING-001, and -MIGRATION-001 (in `xift-internal`).
+`spec/xift-error-taxonomy.md`. The governing decisions are cited by ID
+(ADR-XIFT-ERROR-MODEL-001, -SIGNING-001, -MIGRATION-001).
 
 ## Status
 
