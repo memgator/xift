@@ -14,6 +14,12 @@ designed to be **host-agnostic**: any AI agent runtime (Memgator,
 OpenClaw, custom shells) can embed the XIFT crates and participate in
 an XIFT mesh.
 
+This repository is **public** and holds the normative specifications,
+the interoperability contracts, and the Rust reference implementation.
+Planning artifacts — ADRs, research, steering documents, and Kiro
+tasks — live in the **private** sibling repository `xift-internal`
+(see [Two-repo layout](#two-repo-layout)).
+
 ## Key Design Decisions
 
 - **Knowledge, not memory.** XIFT exchanges *knowledge* (facts,
@@ -29,60 +35,102 @@ an XIFT mesh.
   `Configuration`) that the host must implement. The protocol does
   not depend on any specific identity stack, key manager, or storage
   backend.
-- **7 channels, 5 extensions.** Channels handle wire flows
+- **7 channels, 6 extensions.** Channels handle wire flows
   (discovery, handoff, revocation check, notifications, semantic
   search, interest matching, conversational sessions). Extensions
-  add opt-in metadata blocks to the envelope (governance, provenance,
-  encryption, revocation, quality).
+  add opt-in metadata blocks to the envelope. Four are **core
+  extensions** every conformant implementation MUST recognise
+  (`governance`, `provenance`, `encryption`, `revocation`); two are
+  **silently ignorable** (`quality`, `ontology`).
 
-## Document Map
+## Repository layout
 
-### Normative Specifications (16 files)
+| Path | Contents |
+|---|---|
+| `spec/` | Normative specifications (core, channels, extensions, custodian, interop, error registry, threat model, glossary). |
+| `contracts/` | Interoperability contracts: OpenAPI (`openapi/`), AsyncAPI (`asyncapi/`), and JSON Schema (`schemas/`, including per-extension schemas). |
+| `rust/` | Cargo workspace for the Rust reference implementation (`xift-*` crates). Currently scaffolding — crate skeletons are in place, implementation pending. |
+| `tests/` | Conformance fixtures (`compliance/conformance.yaml`) and integration test scaffolding. |
+| `examples/` | Runnable usage examples (minimal publisher/consumer, OpenClaw↔Claude handoff). |
+| `docs/` | Reader-facing guides (getting started, implementing XIFT, threat-model deep dive). |
+| `policies/` | Cedar and JDM (Zen) policy skeletons referenced by the governance extension. |
+| `tools/` | Repository tooling — see `tools/README.md`. |
+
+## Two-repo layout
+
+- `xift` (this repo, public): specs, contracts, `rust/` reference impl, examples, tests.
+- `xift-internal` (private sibling): ADRs, research, steering docs, `.kiro/` tasks.
+
+**Public/private boundary (strict).** Public files reference an ADR by
+**ID only** (e.g. "per ADR-XIFT-ERROR-MODEL-001"), never its rationale.
+ADR prose, research notes, and internal deliberation never land here.
+
+## Document map
+
+All paths are under `spec/`.
+
+### Core (1 file)
 
 | File | Description |
 |---|---|
-| `xift-1.0-spec-core.md` | Core protocol: envelope schema (`KnowledgeObject`), three-layer model, identity layer, lineage rules, normative parameters, error model, threat model, cryptography. Extensions §4 is an index pointing to the 5 extension docs. |
-| `xift-1.0-spec-channels-general.md` | Cross-channel conventions: transport, authentication, back-pressure, identity handshake primitive, conformance test categories C1.NN–C7.NN / CX.NN (semantic per-channel IDs), billing-related error codes (reserved). |
-| `xift-1.0-spec-channel-1.md` | Channel 1: Discovery & Handshake. Capability advertisement (baseline + extended), VCV, governance constraints, identity handshake flow. |
-| `xift-1.0-spec-channel-2.md` | Channel 2: Envelope Handoff. Inline and content-ref (dial-back) modes, storage-mediated handoff, egress DLP, billing-aware receipt. |
-| `xift-1.0-spec-channel-3.md` | Channel 3: Status Verification (BSL Pull). W3C Bitstring Status List, caching, fail-closed, herd privacy. |
-| `xift-1.0-spec-channel-4.md` | Channel 4: Change Notification (SSE Push). Revocation events, capability changes, Custodian state, keepalive, reconnection. |
-| `xift-1.0-spec-channel-5.md` | Channel 5: Semantic Discovery Request (SDR). Embedding-based search, composite scoring, preview redaction. |
-| `xift-1.0-spec-channel-6.md` | Channel 6: Semantic Interest & Experience Announce (SIEA). Persistent subscriptions, announcements, match notifications, fanout control. |
-| `xift-1.0-spec-channel-7.md` | Channel 7: Sequential Conversation Session (SCS). Multi-turn sessions, smart clustering, consensus voting, session journals. |
-| `xift-1.0-spec-extension-governance.md` | Extension: `governance`. Consent, classification, PII classification, purpose of use, lineage policy, policy tags. |
-| `xift-1.0-spec-extension-provenance.md` | Extension: `provenance`. Derivation lineage, 6 derivation types, anonymization evidence. |
-| `xift-1.0-spec-extension-encryption.md` | Extension: `encryption`. HPKE (RFC 9180), mandatory for sensitive/restricted, scheme negotiation. |
-| `xift-1.0-spec-extension-revocation.md` | Extension: `revocation`. BSL binding, two-layer revocation (TTL + BSL), fail-closed, herd privacy. |
-| `xift-1.0-spec-extension-quality.md` | Extension: `quality`. Metrics, confidence, profile. Silently ignorable by non-supporting receivers. |
-| `xift-custodian-1.0.md` | Trust Custodian: Capability Index, BSL Aggregation, Identity Cache. State machine, election, failover, Δ-gossip, threat model. |
-| `xift-interop-1.0.md` | Interoperability Profile: A2A adapter, MCP adapter, VCV-based tool discovery. |
+| `xift-1_0-spec-core.md` | Core protocol: envelope schema (`KnowledgeObject`), three-layer model, identity layer, lineage rules, normative parameters, error model, threat model, cryptography. §4 indexes the extensions. |
 
-### Reference Implementation Architecture (1 file)
+### Channels (8 files, in `spec/channels/`)
 
 | File | Description |
 |---|---|
-| `xift-reference-implementation-architecture.md` | v0.2. Single Cargo workspace `xift-rs`. Crate tree, host traits, Cedar/Zen integration, observability, Custodian crates, fitness functions FF-01..FF-17. Behavioural Contracts (pre-EARS) per section. |
+| `xift-1_0-spec-channels-general.md` | Cross-channel conventions: transport, authentication, back-pressure, identity handshake primitive, conformance test categories (CORE/C1–C7/CX/CUS semantic IDs), reserved billing-related error codes. |
+| `xift-1_0-spec-channel-1.md` | Channel 1 — Discovery & Handshake. Capability advertisement (baseline + extended), VCV, governance constraints, identity handshake flow. |
+| `xift-1_0-spec-channel-2.md` | Channel 2 — Envelope Handoff. Inline and content-ref (dial-back) modes, storage-mediated handoff, egress DLP, billing-aware receipt. |
+| `xift-1_0-spec-channel-3.md` | Channel 3 — Status Verification (BSL Pull). W3C Bitstring Status List, caching, fail-closed, herd privacy. |
+| `xift-1_0-spec-channel-4.md` | Channel 4 — Change Notification (SSE Push). Revocation events, capability changes, Custodian state, keepalive, reconnection. |
+| `xift-1_0-spec-channel-5.md` | Channel 5 — Semantic Discovery Request (SDR). Embedding-based search, composite scoring, preview redaction. |
+| `xift-1_0-spec-channel-6.md` | Channel 6 — Semantic Interest & Experience Announce (SIEA). Persistent subscriptions, announcements, match notifications, fanout control. |
+| `xift-1_0-spec-channel-7.md` | Channel 7 — Sequential Conversation Session (SCS). Multi-turn sessions, smart clustering, consensus voting, session journals. |
 
-### Steering Documents for EARS Generation (9 files)
+### Extensions (6 files, in `spec/extensions/`)
+
+| File | Tier | Description |
+|---|---|---|
+| `xift-1_0-spec-extension-governance.md` | core | Consent, classification, PII classification, purpose of use, lineage policy, policy tags. |
+| `xift-1_0-spec-extension-provenance.md` | core | Derivation lineage, derivation types, anonymization evidence. |
+| `xift-1_0-spec-extension-encryption.md` | core | HPKE (RFC 9180), mandatory for sensitive/restricted, scheme negotiation. |
+| `xift-1_0-spec-extension-revocation.md` | core | BSL binding, two-layer revocation (TTL + BSL), fail-closed, herd privacy. |
+| `xift-1_0-spec-extension-quality.md` | ignorable | Metrics, confidence, profile. Silently ignorable by non-supporting receivers. |
+| `xift-1_0-spec-extension-ontology.md` | ignorable | Governed vocabulary descriptor and reciprocal alignment; SHOULD accompany Channel 6. Silently ignorable. |
+
+### Custodian, interop, and cross-cutting (5 files, in `spec/`)
 
 | File | Description |
 |---|---|
-| `xift-domain-vocabulary.md` | ~80 domain entities with canonical names, Rust shapes, invariants, restrictions, sources. |
-| `xift-actor-catalogue.md` | Closed set of legitimate EARS subjects: wire actors, channel handlers, Custodian components, transport layers, policy/crypto, host traits, quality/process. |
-| `xift-non-goals.md` | 20 explicit non-goals with boundary tests. |
-| `xift-event-vocabulary.md` | ~110 canonical events in 10 clusters with emitters, observers, data fields, triggers. |
-| `xift-state-vocabulary.md` | 13 state machines with transitions, per-state invariants, entry/exit actions. |
-| `xift-error-taxonomy.md` | 96 error/warning codes consolidated from all specs with trigger conditions, retryability, remedies. |
-| `xift-budgets-and-thresholds.md` | ~80 numerical parameters as single source of truth. |
-| `xift-conformance-matrix.md` | 73 conformance cases mapped to subjects, triggers, expected outcomes, budgets, fitness functions. |
-| `xift-decision-flowcharts.md` | 8 Mermaid decision diagrams for the most complex protocol paths. |
+| `xift-1_0-custodian.md` | Trust Custodian: Capability Index, BSL Aggregation, Identity Cache. State machine, election, failover, Δ-gossip, threat model. |
+| `xift-1_0-interop.md` | Interoperability Profile: A2A adapter, MCP adapter, VCV-based tool discovery. |
+| `xift-error-taxonomy.md` | Authoritative category registry: per code `layer`, `severity`, `category`, `retryable`, `emitter`, `observer`, `trigger`, `remedy`, `source`, `status`. Cited normatively by the channel specs. |
+| `threat-model.md` | Consolidated threat model across channels and extensions. |
+| `glossary.md` | Memgator + XIFT glossary (two sections: Memgator terms and XIFT Protocol terms). |
 
-### Glossary (project-level, in memgator-internal)
+### Contracts (`contracts/`)
 
-| File | Description |
+| Path | Description |
 |---|---|
-| `glossary.md` | Memgator + XIFT glossary. Two sections: Memgator terms and XIFT Protocol terms. |
+| `openapi/xift-api.yaml` | OpenAPI description of the synchronous (request/response) surface. |
+| `asyncapi/xift-events.async.yaml` | AsyncAPI description of the event/notification surface. |
+| `schemas/` | JSON Schemas for the envelope, handshake, capability advertisement, grant/delegation, status list, and semantic query/response. |
+| `schemas/extensions/` | One JSON Schema per extension (`governance`, `provenance`, `encryption`, `revocation`, `quality`, `ontology`). |
+
+### Reference implementation (`rust/`)
+
+A single Cargo workspace. Crate skeletons currently in place
+(implementation pending):
+
+| Crate dir | Role |
+|---|---|
+| `xift-core` | Envelope, crypto, error model, shared types. |
+| `xift-client` | Initiating/consuming side of the channels. |
+| `xift-server` | Serving/publishing side of the channels. |
+| `xift-custodian` | Trust Custodian services. |
+| `xift-adapter-mcp` | MCP interoperability adapter. |
+| `xift-adapter-a2a` | A2A interoperability adapter. |
 
 ## Terminology Quick Reference
 
@@ -95,14 +143,21 @@ an XIFT mesh.
 | **Host** | The process embedding the XIFT crates (Memgator, OpenClaw, a custom agent shell, a test harness). |
 | **Custodian** | Optional agent role offering Capability Index, BSL Aggregation, and Identity Cache services. |
 | **Channel** | One of 7 wire-flow protocols (Discovery, Handoff, BSL Pull, SSE Push, SDR, SIEA, SCS). |
-| **Extension** | One of 5 opt-in envelope metadata blocks (governance, provenance, encryption, revocation, quality). |
+| **Extension** | One of 6 opt-in envelope metadata blocks (governance, provenance, encryption, revocation, quality, ontology). |
 
-## Version History
+## Error model
 
-| Date | Milestone |
-|---|---|
-| 2026-05-18 | XIFT research thread originated; initial glossary. |
-| 2026-05-20 | Core spec v3.0 (monolithic). |
-| 2026-05-21 | Core spec v3.1; channel split; Custodian spec; Interop profile. |
-| 2026-05-23 | Per-channel specs; channels-general; billing error codes. |
-| 2026-05-24 | Knowledge paradigm shift; extension extraction; host-traits refactor; 9 steering docs; Phase 1/2/3 elimination; status normalisation to v1.0. |
+The numeric `code` is a small immutable per-layer routing set; the
+`layer:domain:sub_category` `category` string is the source of domain
+truth. There is no numeric `financial` layer — billing is
+`policy:financial:*`. Error objects are flat and signed in full
+(Ed25519 over JCS / RFC 8785). The authoritative category registry is
+`spec/xift-error-taxonomy.md`. See ADR-XIFT-ERROR-MODEL-001,
+-SIGNING-001, and -MIGRATION-001 (in `xift-internal`).
+
+## Status
+
+All v1.0 specifications are `draft`. The contracts track the specs;
+the Rust workspace is scaffolding. Authoritative change history is git;
+each content directory keeps a newest-first `CHANGELOG.md`
+(`spec/`, `contracts/`, `rust/`).
