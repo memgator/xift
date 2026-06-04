@@ -11,8 +11,8 @@ Consolidated change history for the documents in `spec/` (and `spec/channels/`).
   preserved in git and summarized below.
 
 > Consolidated on 2026-05-31 from the per-file change-log sections
-> (per-directory changelog convention — see `CLAUDE.md`). The versioned
-> registry/glossary rows are reproduced verbatim.
+> (per-directory changelog convention). The versioned registry/glossary
+> rows are reproduced verbatim.
 
 > **Naming legend (Channel 7).** As of 2026-05-31, Channel 7 is named
 > **SCS — Sequential Conversation Session**, with session parameters `scs_*`

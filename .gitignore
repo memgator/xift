@@ -15,3 +15,7 @@ Thumbs.db
 # Build outputs
 dist/
 build/
+
+# Agent operating contract — kept local, not published (references the
+# private planning repo; must not be exposed on the public surface).
+CLAUDE.md
