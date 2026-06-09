@@ -7,7 +7,7 @@
           {
             "type": "command",
             "if": "Bash(git *)",
-            "command": "printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"git repo root: %s\"}}\\n' \"$(git rev-parse --show-toplevel 2>/dev/null || echo '(not in a git repo)')\"",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/git-root.sh\"",
             "statusMessage": "Resolving git repo root…"
           }
         ]
