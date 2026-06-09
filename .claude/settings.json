@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git *)",
+            "command": "printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"git repo root: %s\"}}\\n' \"$(git rev-parse --show-toplevel 2>/dev/null || echo '(not in a git repo)')\"",
+            "statusMessage": "Resolving git repo root…"
+          }
+        ]
+      }
+    ]
+  }
+}
